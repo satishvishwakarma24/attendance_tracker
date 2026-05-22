@@ -1,21 +1,26 @@
 import 'package:go_router/go_router.dart';
-import '../../modules/views/home_screen.dart';
-import '../../modules/views/settings_screen.dart';
+import '../../modules/view.dart';
 import 'routes_name.dart';
 
 class Routes {
-  Routes._();
-
   static final GoRouter router = GoRouter(
-    initialLocation: RoutesName.home,
+    initialLocation: RoutesName.login,
     routes: [
       GoRoute(
-        path: RoutesName.home,
-        builder: (context, state) => const HomeScreen(),
+        path: RoutesName.login,
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: RoutesName.settings,
-        builder: (context, state) => const SettingsScreen(),
+        path: RoutesName.dashboard,
+        builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: RoutesName.locations,
+        builder: (context, state) => const LocationsScreen(),
+      ),
+      GoRoute(
+        path: RoutesName.addLocation,
+        builder: (context, state) => const AddLocationScreen(),
       ),
     ],
   );

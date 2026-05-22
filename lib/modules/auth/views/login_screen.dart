@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -28,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Color(0xFF0050CB),
           ),
         );
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        context.go('/dashboard');
       });
     }
   }
@@ -46,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: Color(0xFF0050CB),
         ),
       );
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      context.go('/dashboard');
     });
   }
 

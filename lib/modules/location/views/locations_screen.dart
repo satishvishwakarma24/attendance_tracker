@@ -1,45 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/locations_provider.dart';
 
-class OfficeLocation {
-  final String name;
-  final String coordinates;
-  final IconData icon;
 
-  OfficeLocation({
-    required this.name,
-    required this.coordinates,
-    required this.icon,
-  });
-}
-
-class LocationsScreen extends StatefulWidget {
-  const LocationsScreen({Key? key}) : super(key: key);
+class LocationsScreen extends ConsumerWidget {
+  const LocationsScreen({super.key});
 
   @override
-  State<LocationsScreen> createState() => _LocationsScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locations = ref.watch(locationsProvider);
 
-class _LocationsScreenState extends State<LocationsScreen> {
-  final List<OfficeLocation> _locations = [
-    OfficeLocation(
-      name: 'Downtown HQ',
-      coordinates: '40.7128° N, 74.0060° W',
-      icon: Icons.business,
-    ),
-    OfficeLocation(
-      name: 'Westside Branch',
-      coordinates: '34.0522° N, 118.2437° W',
-      icon: Icons.domain,
-    ),
-    OfficeLocation(
-      name: 'Innovation Hub',
-      coordinates: '37.7749° N, 122.4194° W',
-      icon: Icons.lightbulb,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       appBar: AppBar(
@@ -96,8 +67,8 @@ class _LocationsScreenState extends State<LocationsScreen> {
                   Container(
                     width: 48,
                     height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF4FF),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEFF4FF),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -122,7 +93,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Total Active Locations: ${_locations.length + 9}',
+                        'Total Active Locations: ${locations.length}',
                         style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 18,
@@ -141,10 +112,10 @@ class _LocationsScreenState extends State<LocationsScreen> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _locations.length,
+              itemCount: locations.length,
               separatorBuilder: (context, index) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final loc = _locations[index];
+                final loc = locations[index];
                 return Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
@@ -234,7 +205,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pushNamed(context, '/add-location');
+          context.push('/add-location');
         },
         backgroundColor: const Color(0xFF0050CB),
         foregroundColor: Colors.white,

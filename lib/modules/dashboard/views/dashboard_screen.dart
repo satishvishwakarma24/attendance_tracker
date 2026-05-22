@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../providers/attendance_provider.dart';
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+class DashboardScreen extends ConsumerWidget {
+  const DashboardScreen({super.key});
 
-  @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  bool _isPunchedIn = false;
-  DateTime? _lastPunchTime;
-
-  void _handlePunchAction() {
-    setState(() {
-      _isPunchedIn = !_isPunchedIn;
-      _lastPunchTime = DateTime.now();
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_isPunchedIn 
-          ? 'Punched In safely at Office Zone' 
-          : 'Punched Out safely'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF0050CB),
-      ),
-    );
+  String _formatTime(DateTime dateTime) {
+    return DateFormat('hh:mm a').format(dateTime);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final attendance = ref.watch(attendanceProvider);
+    final isPunchedIn = attendance.isPunchedIn;
+
+    void handlePunchAction() {
+      ref.read(attendanceProvider.notifier).togglePunch();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(!isPunchedIn 
+            ? 'Punched In safely at Office Zone' 
+            : 'Punched Out safely'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF0050CB),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       appBar: AppBar(
@@ -44,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
+            const Text(
               'WorkSync',
               style: TextStyle(
                 fontFamily: 'Inter',
@@ -68,7 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Welcome Section
-            Text(
+            const Text(
               'Hi, Alex Johnson',
               style: TextStyle(
                 fontFamily: 'Inter',
@@ -78,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
+            const Text(
               'Ready for a productive day?',
               style: TextStyle(
                 fontFamily: 'Inter',
@@ -109,19 +108,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Container(
                     width: 64,
                     height: 64,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF4FF),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEFF4FF),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      _isPunchedIn ? Icons.door_back_door_outlined : Icons.sensor_door,
+                      isPunchedIn ? Icons.door_back_door_outlined : Icons.sensor_door,
                       size: 32,
                       color: const Color(0xFF0050CB),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _isPunchedIn ? 'Punched In' : 'Punched Out',
+                    isPunchedIn ? 'Punched In' : 'Punched Out',
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 28,
@@ -154,15 +153,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: _isPunchedIn ? Colors.green : const Color(0xFF727687),
+                            color: isPunchedIn ? Colors.green : const Color(0xFF727687),
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _isPunchedIn 
-                              ? 'Active since Today 09:00 AM'
-                              : 'Inactive since Yesterday 5:00 PM',
+                          isPunchedIn 
+                              ? 'Active since ${attendance.lastPunchTime != null ? _formatTime(attendance.lastPunchTime!) : "Today 09:00 AM"}'
+                              : 'Inactive since ${attendance.lastPunchTime != null ? _formatTime(attendance.lastPunchTime!) : "Yesterday 5:00 PM"}',
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 12,
@@ -208,10 +207,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
                           'Inside Office Zone',
                           style: TextStyle(
@@ -244,7 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             // Fingerprint Punch Action Button
             ElevatedButton(
-              onPressed: _handlePunchAction,
+              onPressed: handlePunchAction,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0050CB),
                 foregroundColor: Colors.white,
@@ -261,7 +260,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const Icon(Icons.fingerprint, size: 28),
                   const SizedBox(width: 12),
                   Text(
-                    _isPunchedIn ? 'Punch Out' : 'Punch In',
+                    isPunchedIn ? 'Punch Out' : 'Punch In',
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 18,

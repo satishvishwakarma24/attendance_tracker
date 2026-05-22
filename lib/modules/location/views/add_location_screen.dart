@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../models/office_location.dart';
+import '../providers/locations_provider.dart';
 
-class AddLocationScreen extends StatefulWidget {
-  const AddLocationScreen({Key? key}) : super(key: key);
+class AddLocationScreen extends ConsumerStatefulWidget {
+  const AddLocationScreen({super.key});
 
   @override
-  State<AddLocationScreen> createState() => _AddLocationScreenState();
+  ConsumerState<AddLocationScreen> createState() => _AddLocationScreenState();
 }
 
-class _AddLocationScreenState extends State<AddLocationScreen> {
+class _AddLocationScreenState extends ConsumerState<AddLocationScreen> {
   final _nameController = TextEditingController();
   final _latController = TextEditingController(text: '40.7128');
   final _lngController = TextEditingController(text: '-74.0060');
   double _radius = 100.0;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _latController.dispose();
+    _lngController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +34,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
         elevation: 0.5,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF424656)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'Add Location',
@@ -47,8 +59,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                 border: Border.all(color: const Color(0xFFD3E4FE)),
                 image: const DecorationImage(
                   image: NetworkImage(
-                    'https://lh3.googleusercontent.com/aida-public/AB6AXuBd_oFgQAyFXrYLfjhr5G8uCXM5BTMSqSG-EZfRH8_U4Z8Ec8TeMvPvNqwtwDwZ1LnyK_MdjTzVnvqYAcq8XWAj4kNwyKPr93BiYFjWyFj4TT941_BbACsKdAL_yRCA-stwF_vZHpWoEN_UCyUGD_8nNWU7YV8b0TjQtgxDTX4x5pLwakWmd_DoQCMvMm4QJFldbAu5div0Bg8FH5aDzO8yIFBjuMxgFi84hiz4Iayo4zHsd9ImZlFPktuhy4ZzhXsEL7AQy8jxbIGm'
-                  ),
+                      'https://lh3.googleusercontent.com/aida-public/AB6AXuBd_oFgQAyFXrYLfjhr5G8uCXM5BTMSqSG-EZfRH8_U4Z8Ec8TeMvPvNqwtwDwZ1LnyK_MdjTzVnvqYAcq8XWAj4kNwyKPr93BiYFjWyFj4TT941_BbACsKdAL_yRCA-stwF_vZHpWoEN_UCyUGD_8nNWU7YV8b0TjQtgxDTX4x5pLwakWmd_DoQCMvMm4QJFldbAu5div0Bg8FH5aDzO8yIFBjuMxgFi84hiz4Iayo4zHsd9ImZlFPktuhy4ZzhXsEL7AQy8jxbIGm'),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -63,11 +74,12 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0x330050CB),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0x800050CB), width: 2),
+                      border:
+                          Border.all(color: const Color(0x800050CB), width: 2),
                     ),
                     child: const Icon(
-                      Icons.location_on, 
-                      color: Color(0xFF0050CB), 
+                      Icons.location_on,
+                      color: Color(0xFF0050CB),
                       size: 28,
                     ),
                   ),
@@ -76,15 +88,17 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                     bottom: 12,
                     right: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withAlpha(230),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: const Color(0xFFEFF4FF)),
                       ),
                       child: const Row(
-                        children:  [
-                          Icon(Icons.my_location, size: 14, color: Color(0xFF0050CB)),
+                        children: [
+                          Icon(Icons.my_location,
+                              size: 14, color: Color(0xFF0050CB)),
                           SizedBox(width: 6),
                           Text(
                             'GPS Active',
@@ -131,7 +145,8 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                       hintText: 'e.g. Headquarters',
                       filled: true,
                       fillColor: const Color(0xFFF8FAFC),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: Color(0xFFC2C6D8)),
@@ -169,7 +184,8 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                                 fillColor: const Color(0xFFF8FAFC),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Color(0xFFC2C6D8)),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFFC2C6D8)),
                                 ),
                               ),
                             ),
@@ -199,7 +215,8 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                                 fillColor: const Color(0xFFF8FAFC),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Color(0xFFC2C6D8)),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFFC2C6D8)),
                                 ),
                               ),
                             ),
@@ -242,11 +259,15 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                     inactiveColor: const Color(0xFFEFF4FF),
                     onChanged: (val) => setState(() => _radius = val),
                   ),
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text('10m', style: TextStyle(fontSize: 12, color: Color(0xFF727687))),
-                      Text('500m', style: TextStyle(fontSize: 12, color: Color(0xFF727687))),
+                    children: [
+                      Text('10m',
+                          style: TextStyle(
+                              fontSize: 12, color: Color(0xFF727687))),
+                      Text('500m',
+                          style: TextStyle(
+                              fontSize: 12, color: Color(0xFF727687))),
                     ],
                   ),
                 ],
@@ -257,13 +278,36 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
             // Persistent Persistent Button Action
             ElevatedButton(
               onPressed: () {
-                if (_nameController.text.isEmpty) {
+                final name = _nameController.text.trim();
+                if (name.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter an office name')),
+                    const SnackBar(
+                        content: Text('Please enter an office name')),
                   );
                   return;
                 }
-                Navigator.pop(context);
+
+                final lat = _latController.text.trim();
+                final lng = _lngController.text.trim();
+                final coordinates = '$lat° N, $lng° W';
+
+                final newLoc = OfficeLocation(
+                  name: name,
+                  coordinates: coordinates,
+                  icon: Icons.location_on,
+                );
+
+                ref.read(locationsProvider.notifier).addLocation(newLoc);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Location "$name" successfully added!'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: const Color(0xFF0050CB),
+                  ),
+                );
+
+                context.pop();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0050CB),
@@ -274,9 +318,9 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 minimumSize: const Size(double.infinity, 50),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.save),
                   SizedBox(width: 8),
                   Text(
