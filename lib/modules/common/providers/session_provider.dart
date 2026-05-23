@@ -1,44 +1,59 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '/core/utils/logger.dart';
+import '/data/models/attendance_record.dart';
 import '/data/models/user_session.dart';
+import '/data/repositories/attendance_repository.dart';
 import '/data/repositories/auth_repository.dart';
 import '/data/repositories/session_repository.dart';
 import '/modules/auth/providers/auth_providers.dart';
 
 final userSessionsProvider =
-    StreamProvider.autoDispose<List<UserSession>>((ref) {
+    StreamProvider.autoDispose<List<UserSession>>((ref) async* {
   final user = ref.watch(authStateProvider).value;
   if (user == null) {
-    return Stream.value(const []);
+    yield const [];
+    return;
   }
-  return ref
-      .watch(sessionRepositoryProvider)
-      .watchUserSessions(user.uid);
-});
 
-/// Ensures a single active Firestore session while the user is signed in.
-final sessionLifecycleProvider = Provider<void>((ref) {
-  ref.listen(authStateProvider, (previous, next) async {
-    final user = next.value;
-    if (user == null) return;
+  final sessionRepo = ref.watch(sessionRepositoryProvider);
+  final attendanceRepo = ref.watch(attendanceRepositoryProvider);
+
+  await for (final completed in sessionRepo.watchUserSessions(user.uid)) {
+    AttendanceRecord? latest;
     try {
-      await ref.read(sessionRepositoryProvider).ensureActiveSession(user.uid);
-    } catch (e, s) {
-      Logger.error('Failed to ensure active session', e, s);
+      latest = await attendanceRepo.getLatestForUser(user.uid);
+    } catch (_) {
+      latest = null;
     }
-  });
+
+    final items = List<UserSession>.from(completed);
+    if (latest != null &&
+        latest.isPunchIn &&
+        latest.timestamp != null &&
+        !_hasActivePunch(items, latest.timestamp!)) {
+      items.insert(
+        0,
+        UserSession.activePunch(
+          userId: user.uid,
+          punchInAt: latest.timestamp!,
+          locationId: latest.locationId,
+          locationName: latest.locationName,
+        ),
+      );
+    }
+    yield items;
+  }
 });
 
-Future<void> startUserSession(WidgetRef ref, User user) async {
-  await ref.read(sessionRepositoryProvider).ensureActiveSession(user.uid);
+bool _hasActivePunch(List<UserSession> sessions, DateTime punchInAt) {
+  return sessions.any(
+    (s) =>
+        s.isActive ||
+        (s.punchInAt != null &&
+            s.punchInAt!.difference(punchInAt).inSeconds.abs() < 2),
+  );
 }
 
-Future<void> endUserSessionAndSignOut(WidgetRef ref) async {
-  final user = ref.read(authStateProvider).value;
-  if (user != null) {
-    await ref.read(sessionRepositoryProvider).endActiveSession(user.uid);
-  }
+Future<void> signOut(WidgetRef ref) async {
   await ref.read(authRepositoryProvider).signOut();
 }

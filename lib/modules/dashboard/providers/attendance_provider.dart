@@ -6,6 +6,7 @@ import '../../../core/utils/geofence_service.dart';
 import '../../../core/utils/location_permission_helper.dart';
 import '../../../core/utils/logger.dart';
 import '../../../data/repositories/attendance_repository.dart';
+import '../../../data/repositories/session_repository.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../location/providers/locations_provider.dart';
 import '../models/attendance_state.dart';
@@ -28,6 +29,8 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
 
   AttendanceRepository get _attendanceRepo =>
       ref.read(attendanceRepositoryProvider);
+
+  SessionRepository get _sessionRepo => ref.read(sessionRepositoryProvider);
 
   Future<void> refreshLocationStatus() async {
     if (_isSuperAdmin) return;
@@ -137,7 +140,9 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
       return;
     }
 
-    final punchIn = !state.isPunchedIn;
+    final punchingOut = state.isPunchedIn;
+    final punchInAt = state.lastPunchTime;
+    final punchIn = !punchingOut;
     state = state.copyWith(isPunching: true, clearError: true);
 
     try {
@@ -182,6 +187,26 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
         lat: position.latitude,
         lng: position.longitude,
       );
+
+      if (punchingOut) {
+        final punchInRecord =
+            await _attendanceRepo.getLatestPunchInForUser(user.uid);
+        final sessionStart =
+            punchInAt ?? punchInRecord?.timestamp;
+        if (sessionStart != null) {
+          await _sessionRepo.recordPunchOutSession(
+            userId: user.uid,
+            locationId: office.id,
+            locationName: office.name,
+            punchInAt: sessionStart,
+            punchInAttendanceId: punchInRecord?.id,
+          );
+        } else {
+          Logger.warning(
+            'Punch out without punch-in time; session not saved',
+          );
+        }
+      }
 
       state = state.copyWith(
         isPunching: false,

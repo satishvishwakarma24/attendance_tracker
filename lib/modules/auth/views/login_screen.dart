@@ -12,8 +12,7 @@ import '/core/utils/logger.dart';
 import '/data/repositories/auth_repository.dart';
 import '/data/repositories/user_repository.dart';
 import '/modules/auth/views/widgets/signin_form.dart';
-import '/modules/common/module_responsive.dart';
-import '/modules/common/providers/session_provider.dart';
+import '../../common/widgets/module_responsive.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -90,7 +89,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _afterAuth(User user) async {
     await ref.read(userRepositoryProvider).ensureUserDocument(user);
-    await startUserSession(ref, user);
     if (!mounted) return;
     context.go(RoutesName.dashboard);
   }

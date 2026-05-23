@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Central theme for the app. Screens should use [Theme.of] / [AppThemeX] only.
+/// Central theme for the app
 abstract final class AppTheme {
-  /// Single brand color — Material 3 derives the full [ColorScheme] from this.
+  /// Single brand color
   static const Color seedColor = Color(0xFF0050CB);
 
   static ThemeData get light => _theme(Brightness.light);
@@ -125,7 +125,8 @@ abstract final class AppTheme {
         color: scheme.onSurface,
       ),
       bodyLarge: GoogleFonts.lato(fontSize: 16, color: scheme.onSurface),
-      bodyMedium: GoogleFonts.lato(fontSize: 14, color: scheme.onSurfaceVariant),
+      bodyMedium:
+          GoogleFonts.lato(fontSize: 14, color: scheme.onSurfaceVariant),
       bodySmall: GoogleFonts.lato(fontSize: 12, color: scheme.onSurfaceVariant),
       labelLarge: GoogleFonts.lato(
         fontSize: 14,

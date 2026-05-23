@@ -2,27 +2,54 @@ class UserSession {
   const UserSession({
     required this.id,
     required this.userId,
-    required this.loginAt,
-    this.logoutAt,
+    this.punchInAt,
+    this.punchOutAt,
     this.durationSeconds,
     required this.isActive,
+    this.locationId,
+    this.locationName,
   });
 
   final String id;
   final String userId;
-  final DateTime? loginAt;
-  final DateTime? logoutAt;
+  final DateTime? punchInAt;
+  final DateTime? punchOutAt;
   final int? durationSeconds;
   final bool isActive;
+  final String? locationId;
+  final String? locationName;
+
+  /// Open punch (not yet punched out) — shown in history from live attendance.
+  factory UserSession.activePunch({
+    required String userId,
+    required DateTime punchInAt,
+    String? locationId,
+    String? locationName,
+  }) {
+    return UserSession(
+      id: '_active',
+      userId: userId,
+      punchInAt: punchInAt,
+      isActive: true,
+      locationId: locationId,
+      locationName: locationName,
+    );
+  }
 
   factory UserSession.fromMap(String id, Map<String, dynamic> map) {
+    DateTime? readTime(String key) {
+      return (map[key] as dynamic)?.toDate() as DateTime?;
+    }
+
     return UserSession(
       id: id,
       userId: map['userId'] as String? ?? '',
-      loginAt: (map['loginAt'] as dynamic)?.toDate() as DateTime?,
-      logoutAt: (map['logoutAt'] as dynamic)?.toDate() as DateTime?,
+      punchInAt: readTime('punchInAt') ?? readTime('loginAt'),
+      punchOutAt: readTime('punchOutAt') ?? readTime('logoutAt'),
       durationSeconds: (map['durationSeconds'] as num?)?.toInt(),
       isActive: map['isActive'] as bool? ?? false,
+      locationId: map['locationId'] as String?,
+      locationName: map['locationName'] as String?,
     );
   }
 
@@ -30,8 +57,8 @@ class UserSession {
     if (durationSeconds != null) {
       return Duration(seconds: durationSeconds!);
     }
-    if (loginAt != null && logoutAt != null) {
-      return logoutAt!.difference(loginAt!);
+    if (punchInAt != null && punchOutAt != null) {
+      return punchOutAt!.difference(punchInAt!);
     }
     return null;
   }

@@ -7,7 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '/core/theme/app_theme.dart';
 import '/core/utils/location_permission_helper.dart';
-import '/modules/common/module_responsive.dart';
+import '../../common/widgets/module_responsive.dart';
 import '/core/utils/logger.dart';
 import '/data/repositories/location_repository.dart';
 import 'widgets/location_details_form.dart';

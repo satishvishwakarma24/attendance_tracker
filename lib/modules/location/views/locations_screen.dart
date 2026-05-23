@@ -7,8 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/logger.dart';
 import '../../../data/models/office_location_model.dart';
 import '../../../data/repositories/location_repository.dart';
-import '../../common/module_responsive.dart';
-import '../../common/widgets/app_scaffold.dart';
+import '../../common/widgets/module_responsive.dart';
 import '../providers/locations_provider.dart';
 
 class LocationsScreen extends ConsumerWidget {
@@ -20,10 +19,7 @@ class LocationsScreen extends ConsumerWidget {
     final colors = context.colors;
     final text = context.textStyles;
 
-    return AppScaffold(
-      title: 'Office Locations',
-      currentRoute: RoutesName.locations,
-      body: locationsAsync.when(
+    return locationsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
@@ -109,11 +105,6 @@ class LocationsScreen extends ConsumerWidget {
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(RoutesName.addLocation),
-        child: Icon(Icons.add, size: 28.sp),
-      ),
     );
   }
 }

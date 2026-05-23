@@ -1,4 +1,3 @@
-import 'package:attendance_tracker/config/constant/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,8 +8,7 @@ import '../../../config/routes/routes_name.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/location_permission_helper.dart';
 import '../../auth/providers/auth_providers.dart';
-import '../../common/module_responsive.dart';
-import '../../common/widgets/app_scaffold.dart';
+import '../../common/widgets/module_responsive.dart';
 import '../providers/attendance_provider.dart';
 import 'widgets/dashboard_admin_section.dart';
 import 'widgets/dashboard_geofence_status_card.dart';
@@ -155,15 +153,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ? 'Last punch ${_formatTime(attendance.lastPunchTime!)}'
         : 'No punch recorded today';
 
-    return AppScaffold(
-      title: AppConfig.appName,
-      currentRoute: RoutesName.dashboard,
-      body: RefreshIndicator(
-        onRefresh: isAdmin
-            ? () async {}
-            : () =>
-                ref.read(attendanceProvider.notifier).refreshLocationStatus(),
-        child: SingleChildScrollView(
+    return RefreshIndicator(
+      onRefresh: isAdmin
+          ? () async {}
+          : () => ref.read(attendanceProvider.notifier).refreshLocationStatus(),
+      child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: ModuleResponsive.screenPadding,
           child: Column(
@@ -179,14 +173,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ? 'Manage office geofences and attendance records.'
                     : 'Ready for a productive day?',
                 style: text.bodyLarge?.copyWith(
-                  fontSize: 16.sp,
+                  fontSize: 15.sp,
                   color: colors.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               SizedBox(height: 24.h),
               if (isAdmin)
                 DashboardAdminSection(
-                  onManageLocations: () => context.push(RoutesName.locations),
+                  onManageLocations: () {
+                    final shell = StatefulNavigationShell.maybeOf(context);
+                    if (shell != null) {
+                      if (shell.currentIndex != 1) {
+                        shell.goBranch(1);
+                      }
+                      context.go(RoutesName.locations);
+                    } else {
+                      context.go(RoutesName.locations);
+                    }
+                  },
                   onViewAttendance: () =>
                       context.push(RoutesName.attendanceMonitor),
                 )
@@ -250,7 +254,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 }

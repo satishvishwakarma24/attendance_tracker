@@ -39,6 +39,18 @@ class AttendanceRepository {
     return AttendanceRecord.fromMap(doc.id, doc.data());
   }
 
+  Future<AttendanceRecord?> getLatestPunchInForUser(String userId) async {
+    final snap = await _attendance
+        .where('userId', isEqualTo: userId)
+        .where('type', isEqualTo: 'in')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    final doc = snap.docs.first;
+    return AttendanceRecord.fromMap(doc.id, doc.data());
+  }
+
   Future<void> recordPunch({
     required String userId,
     required String userEmail,

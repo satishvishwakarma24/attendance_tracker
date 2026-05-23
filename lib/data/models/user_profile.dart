@@ -1,4 +1,4 @@
-import 'user_role.dart';
+import 'user_role_enum.dart';
 
 class UserProfile {
   final String uid;

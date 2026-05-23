@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import '/core/theme/app_theme.dart';
 import '/data/models/attendance_record.dart';
-import '/modules/common/module_responsive.dart';
+import '../../../common/widgets/module_responsive.dart';
 
 class AttendanceRecordTile extends StatelessWidget {
   const AttendanceRecordTile({

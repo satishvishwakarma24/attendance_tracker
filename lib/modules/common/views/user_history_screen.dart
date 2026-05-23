@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '/config/routes/routes_name.dart';
 import '/core/theme/app_theme.dart';
 import '/data/models/user_session.dart';
-import '/modules/common/module_responsive.dart';
+import '../widgets/module_responsive.dart';
 import '/modules/common/providers/session_provider.dart';
-import '/modules/common/widgets/app_scaffold.dart';
 
 class UserHistoryScreen extends ConsumerWidget {
   const UserHistoryScreen({super.key});
@@ -17,16 +15,13 @@ class UserHistoryScreen extends ConsumerWidget {
     final sessionsAsync = ref.watch(userSessionsProvider);
     final text = context.textStyles;
 
-    return AppScaffold(
-      title: 'User History',
-      currentRoute: RoutesName.userHistory,
-      body: sessionsAsync.when(
+    return sessionsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
             padding: EdgeInsets.all(24.w),
             child: Text(
-              'Could not load sessions: $e',
+              'Could not load punch history: $e',
               style: text.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -36,8 +31,9 @@ class UserHistoryScreen extends ConsumerWidget {
           if (sessions.isEmpty) {
             return Center(
               child: Text(
-                'No login sessions yet.',
+                'No punch sessions yet.\nPunch in and out to see your work duration.',
                 style: text.bodyMedium,
+                textAlign: TextAlign.center,
               ),
             );
           }
@@ -50,7 +46,6 @@ class UserHistoryScreen extends ConsumerWidget {
             },
           );
         },
-      ),
     );
   }
 }
@@ -62,8 +57,8 @@ class _SessionTile extends StatelessWidget {
 
   Duration? _effectiveDuration(UserSession session) {
     if (!session.isActive) return session.duration;
-    if (session.loginAt == null) return null;
-    return DateTime.now().difference(session.loginAt!);
+    if (session.punchInAt == null) return null;
+    return DateTime.now().difference(session.punchInAt!);
   }
 
   String _formatDuration(Duration? duration) {
@@ -86,13 +81,13 @@ class _SessionTile extends StatelessWidget {
     final text = context.textStyles;
     final dateFormat = DateFormat('MMM d, yyyy · hh:mm a');
 
-    final loginLabel = session.loginAt != null
-        ? dateFormat.format(session.loginAt!)
-        : 'Login pending…';
-    final logoutLabel = session.isActive
-        ? 'Still signed in'
-        : session.logoutAt != null
-            ? dateFormat.format(session.logoutAt!)
+    final punchInLabel = session.punchInAt != null
+        ? dateFormat.format(session.punchInAt!)
+        : '—';
+    final punchOutLabel = session.isActive
+        ? 'Still punched in'
+        : session.punchOutAt != null
+            ? dateFormat.format(session.punchOutAt!)
             : '—';
 
     return Card(
@@ -105,21 +100,25 @@ class _SessionTile extends StatelessWidget {
               children: [
                 Icon(
                   session.isActive
-                      ? Icons.play_circle_outline
-                      : Icons.check_circle_outline,
+                      ? Icons.login
+                      : Icons.logout,
                   color: session.isActive ? colors.primary : colors.tertiary,
                   size: 22.sp,
                 ),
                 SizedBox(width: 8.w),
-                Text(
-                  session.isActive ? 'Active session' : 'Completed',
-                  style: text.labelLarge?.copyWith(
-                    color: session.isActive ? colors.primary : null,
+                Expanded(
+                  child: Text(
+                    session.locationName ?? 'Office',
+                    style: text.labelLarge?.copyWith(
+                      color: session.isActive ? colors.primary : null,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: colors.secondaryContainer,
                     borderRadius: BorderRadius.circular(8.r),
@@ -135,9 +134,9 @@ class _SessionTile extends StatelessWidget {
               ],
             ),
             SizedBox(height: 12.h),
-            _RowLabel(label: 'Login', value: loginLabel, text: text),
+            _RowLabel(label: 'Punch in', value: punchInLabel, text: text),
             SizedBox(height: 6.h),
-            _RowLabel(label: 'Logout', value: logoutLabel, text: text),
+            _RowLabel(label: 'Punch out', value: punchOutLabel, text: text),
           ],
         ),
       ),
@@ -162,7 +161,7 @@ class _RowLabel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 64.w,
+          width: 72.w,
           child: Text(label, style: text.bodySmall),
         ),
         Expanded(

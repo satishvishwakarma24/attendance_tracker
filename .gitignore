@@ -47,8 +47,10 @@ app.*.map.json
 
 # Firebase secrets — never commit
 firebase.*.*
+firebase.json
 *firebase-adminsdk*.json
 **/google-services.json
 **/GoogleService-Info.plist
+firebase_options.dart
 .env
 .env.*

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/services/firebase_providers.dart';
 import '../../core/utils/logger.dart';
 import '../models/user_profile.dart';
-import '../models/user_role.dart';
+import '../models/user_role_enum.dart';
 
 final userRepositoryProvider = Provider<UserRepository>((ref) {
   return UserRepository(firestore: ref.watch(firestoreProvider));

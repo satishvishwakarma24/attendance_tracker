@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '/core/theme/app_theme.dart';
-import '/modules/common/module_responsive.dart';
+import '../../../common/widgets/module_responsive.dart';
 
 class DashboardAdminSection extends StatelessWidget {
   const DashboardAdminSection({

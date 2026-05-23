@@ -43,14 +43,11 @@ service cloud.firestore {
         && (resource.data.userId == request.auth.uid || isSuperAdmin());
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.isActive == true
-        && request.resource.data.keys().hasAll(['userId', 'loginAt', 'isActive']);
-      allow update: if isSignedIn()
-        && resource.data.userId == request.auth.uid
-        && resource.data.isActive == true
         && request.resource.data.isActive == false
-        && request.resource.data.userId == request.auth.uid;
-      allow delete: if false;
+        && request.resource.data.keys().hasAll([
+          'userId', 'punchInAt', 'punchOutAt', 'durationSeconds', 'isActive'
+        ]);
+      allow update, delete: if false;
     }
   }
 }

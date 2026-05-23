@@ -48,13 +48,13 @@ flutter:
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: assets/images/clock-in.png
+  image: assets/images/ic_calendor_log.png
   android: true
   ios: true
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/clock-in.png"
+  image_path: "assets/images/ic_calendor_log.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/clock-in.png"
+  adaptive_icon_foreground: "assets/images/ic_calendor_log.png"

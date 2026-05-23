@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../modules/auth/providers/auth_providers.dart';
+import '../../modules/common/widgets/app_nav_bar.dart';
+import '../../modules/common/widgets/app_shell.dart';
 import '../../modules/view.dart';
 import 'routes_name.dart';
 
@@ -20,7 +22,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (authAsync.isLoading) return null;
 
       final user = authAsync.value;
-      final path = state.matchedLocation;
+      final path = state.uri.path;
       final isLogin = path == RoutesName.login;
 
       if (user == null) {
@@ -31,7 +33,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         return RoutesName.dashboard;
       }
 
-      if (profileAsync.isLoading) return null;
+      // Keep the current tab while profile loads to avoid redirect flicker.
+      if (profileAsync.isLoading) {
+        if (AppNavBar.isShellRoute(path) || path == RoutesName.login) {
+          return null;
+        }
+        return null;
+      }
 
       final isAdmin = profileAsync.value?.role.isSuperAdmin ?? false;
       final adminOnly = path == RoutesName.locations ||
@@ -43,7 +51,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (path == RoutesName.userHistory && isAdmin) {
-        return RoutesName.dashboard;
+        return RoutesName.locations;
+      }
+
+      if (path == RoutesName.locations && !isAdmin) {
+        return RoutesName.userHistory;
       }
 
       return null;
@@ -53,13 +65,52 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutesName.login,
         builder: (context, state) => const LoginScreen(),
       ),
-      GoRoute(
-        path: RoutesName.dashboard,
-        builder: (context, state) => const DashboardScreen(),
-      ),
-      GoRoute(
-        path: RoutesName.locations,
-        builder: (context, state) => const LocationsScreen(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return AppShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutesName.dashboard,
+                pageBuilder: (context, state) => _tabPage(
+                  state: state,
+                  child: const DashboardScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutesName.userHistory,
+                pageBuilder: (context, state) => _tabPage(
+                  state: state,
+                  child: const UserHistoryScreen(),
+                ),
+              ),
+              GoRoute(
+                path: RoutesName.locations,
+                pageBuilder: (context, state) => _tabPage(
+                  state: state,
+                  child: const LocationsScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutesName.settings,
+                pageBuilder: (context, state) => _tabPage(
+                  state: state,
+                  child: const SettingsScreen(),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: RoutesName.addLocation,
@@ -72,17 +123,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutesName.attendanceMonitor,
         builder: (context, state) => const AttendanceMonitorScreen(),
       ),
-      GoRoute(
-        path: RoutesName.userHistory,
-        builder: (context, state) => const UserHistoryScreen(),
-      ),
-      GoRoute(
-        path: RoutesName.settings,
-        builder: (context, state) => const SettingsScreen(),
-      ),
     ],
   );
 });
+
+NoTransitionPage<void> _tabPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return NoTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+  );
+}
 
 class _RouterRefresh extends ChangeNotifier {
   _RouterRefresh(this._ref) {
