@@ -1,216 +1,254 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/locations_provider.dart';
 
+import '../../../config/routes/routes_name.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/logger.dart';
+import '../../../data/models/office_location_model.dart';
+import '../../../data/repositories/location_repository.dart';
+import '../../common/module_responsive.dart';
+import '../../common/widgets/app_scaffold.dart';
+import '../providers/locations_provider.dart';
 
 class LocationsScreen extends ConsumerWidget {
   const LocationsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final locations = ref.watch(locationsProvider);
+    final locationsAsync = ref.watch(locationsStreamProvider);
+    final colors = context.colors;
+    final text = context.textStyles;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        title: Row(
-          children: [
-            const CircleAvatar(
-              radius: 18,
-              backgroundImage: NetworkImage(
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuBPgzGZIAiYuD1JlSH5p1Eh9msixMW4U1jeYSPMwN33wGR452v5Y-ucjhb3YvpBUlCeNEF6uutak0RnYolvwY8xUFO1xo51-PP7vqQaBvweWPvnma3oOwefE0jhwMN96DASbl-3lQtyMGFfT9SAfoBZPln6capfYq7NxkCWYD2GcacEbXQjQUHcNNL1Ofe0lkhKdKsIBcTK7-8RMseR4PZwNZj-KnNpNaokaHizugsJiOc5ldijJFPuVChKs58bcfhsu2A6XaGMm3Lj'
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'WorkSync',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0050CB),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Color(0xFF424656)),
-            onPressed: () {},
+    return AppScaffold(
+      title: 'Office Locations',
+      currentRoute: RoutesName.locations,
+      body: locationsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Text(
+            'Failed to load locations: $e',
+            style: text.bodyMedium?.copyWith(fontSize: 14.sp),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-        child: Column(
-          children: [
-            // Summary Card
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFEFF4FF)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0D0066FF),
-                    blurRadius: 6,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEFF4FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.location_on,
-                      color: Color(0xFF0050CB),
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'LOCATIONS',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
-                          color: Color(0xFF424656),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Total Active Locations: ${locations.length}',
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0B1C30),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Locations List
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: locations.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final loc = locations[index];
-                return Container(
-                  padding: const EdgeInsets.all(16.0),
+        ),
+        data: (locations) {
+          return SingleChildScrollView(
+            padding: ModuleResponsive.screenPadding,
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFEFF4FF)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x0D0066FF),
-                        blurRadius: 6,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
+                    color: colors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: colors.outlineVariant),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 48.w,
+                        height: 48.w,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF4FF),
-                          borderRadius: BorderRadius.circular(12),
+                          color: colors.primaryContainer,
+                          shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          loc.icon,
-                          color: const Color(0xFF0050CB),
-                        ),
+                        child: Icon(Icons.location_on,
+                            color: colors.primary, size: 24.sp),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              loc.name,
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0B1C30),
-                              ),
+                              'Active Geofences',
+                              style: text.titleMedium?.copyWith(fontSize: 16.sp),
                             ),
-                            const SizedBox(height: 2),
                             Text(
-                              loc.coordinates,
-                              style: const TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: Color(0xFF424656),
-                              ),
+                              'Total Active Locations: ${locations.length}',
+                              style: text.bodyMedium?.copyWith(fontSize: 13.sp),
                             ),
                           ],
                         ),
                       ),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0x1A0066FF),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text(
-                              'Active',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF0050CB),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.chevron_right,
-                            color: Color(0xFF727687),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
-                );
-              },
+                ),
+                SizedBox(height: 20.h),
+                if (locations.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(top: 40.h),
+                    child: Text(
+                      'No locations yet. Tap + to add one.',
+                      style: text.bodyMedium?.copyWith(fontSize: 14.sp),
+                    ),
+                  )
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: locations.length,
+                    separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                    itemBuilder: (context, index) {
+                      final loc = locations[index];
+                      return _LocationListTile(
+                        location: loc,
+                        onEdit: () => context.push(
+                          '${RoutesName.addLocation}?id=${loc.id}',
+                        ),
+                        onDelete: () => _confirmDeleteLocation(
+                          context,
+                          ref,
+                          loc.id,
+                          loc.name,
+                        ),
+                      );
+                    },
+                  ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/add-location');
-        },
-        backgroundColor: const Color(0xFF0050CB),
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-        child: const Icon(Icons.add, size: 28),
+        onPressed: () => context.push(RoutesName.addLocation),
+        child: Icon(Icons.add, size: 28.sp),
+      ),
+    );
+  }
+}
+
+Future<void> _confirmDeleteLocation(
+  BuildContext context,
+  WidgetRef ref,
+  String locationId,
+  String locationName,
+) async {
+  final colors = context.colors;
+  final text = context.textStyles;
+
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Delete location?', style: text.titleLarge),
+      content: Text(
+        'Remove "$locationName"? Employees will no longer punch at this geofence.',
+        style: text.bodyMedium,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          style: FilledButton.styleFrom(backgroundColor: colors.error),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  try {
+    await ref.read(locationRepositoryProvider).deleteLocation(locationId);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('"$locationName" deleted')),
+    );
+  } catch (e, s) {
+    Logger.error('Delete location failed', e, s);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Could not delete location: $e'),
+        backgroundColor: colors.error,
+      ),
+    );
+  }
+}
+
+class _LocationListTile extends StatelessWidget {
+  const _LocationListTile({
+    required this.location,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final OfficeLocationModel location;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final text = context.textStyles;
+    final loc = location;
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Icon(loc.listIcon, color: colors.primary, size: 28.sp),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.name,
+                  style: text.titleMedium?.copyWith(fontSize: 15.sp),
+                ),
+                Text(
+                  loc.coordinatesLabel,
+                  style: text.bodySmall?.copyWith(fontSize: 12.sp),
+                ),
+                Text(
+                  'Radius: ${loc.radiusMeters.toStringAsFixed(0)} m',
+                  style: text.bodySmall?.copyWith(
+                    fontSize: 11.sp,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: colors.primaryContainer,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Text(
+              'Active',
+              style: text.bodySmall?.copyWith(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: colors.primary,
+              ),
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, size: 24.sp),
+            onSelected: (value) {
+              if (value == 'edit') {
+                onEdit();
+              } else if (value == 'delete') {
+                onDelete();
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'edit', child: Text('Edit')),
+              PopupMenuItem(value: 'delete', child: Text('Delete')),
+            ],
+          ),
+        ],
       ),
     );
   }

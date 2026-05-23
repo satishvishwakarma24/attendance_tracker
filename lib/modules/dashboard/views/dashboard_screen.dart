@@ -1,287 +1,254 @@
+import 'package:attendance_tracker/config/constant/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../providers/attendance_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-class DashboardScreen extends ConsumerWidget {
+import '../../../config/routes/routes_name.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/location_permission_helper.dart';
+import '../../auth/providers/auth_providers.dart';
+import '../../common/module_responsive.dart';
+import '../../common/widgets/app_scaffold.dart';
+import '../providers/attendance_provider.dart';
+import 'widgets/dashboard_admin_section.dart';
+import 'widgets/dashboard_geofence_status_card.dart';
+import 'widgets/dashboard_punch_button.dart';
+import 'widgets/dashboard_punch_status_card.dart';
+import 'widgets/location_permission_banner.dart';
+
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _locationPromptShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(isSuperAdminProvider)) return;
+      _promptLocationAccess();
+    });
+  }
 
   String _formatTime(DateTime dateTime) {
     return DateFormat('hh:mm a').format(dateTime);
   }
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final attendance = ref.watch(attendanceProvider);
-    final isPunchedIn = attendance.isPunchedIn;
+  Future<void> _promptLocationAccess() async {
+    if (_locationPromptShown || !mounted) return;
 
-    void handlePunchAction() {
-      ref.read(attendanceProvider.notifier).togglePunch();
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(!isPunchedIn 
-            ? 'Punched In safely at Office Zone' 
-            : 'Punched Out safely'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF0050CB),
-        ),
-      );
+    var access = await LocationPermissionHelper.checkStatus();
+    if (access == LocationAccess.granted) {
+      if (mounted) {
+        ref.read(attendanceProvider.notifier).refreshLocationStatus();
+      }
+      return;
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        title: Row(
-          children: [
-            const CircleAvatar(
-              radius: 18,
-              backgroundImage: NetworkImage(
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuDm834hPlRb5ruEPBNbrAEeQBHD88X3vXLJeRxSsN_2XC3U-rpVYq9VKdTRp-h0ULfXbz8BcT4D5CfmtVumTSNAepRkWOGOR1frhu-Q9uJMQ7A2AiA1J7Kgyxa3n9BusJBOnM-LAqlCXemJKRSpd1JjqRWcD8TPOeh-JiHOz1HN1ZrbpBGDLCTrtUSfU_wZhRJIfq-kZLJZRd0pGpXICFn8mkIOiEuy49fRnokclok4B4RDQ9h9PEclPHY4v-1BBiwX32KmEQShsPkJ'
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'WorkSync',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0050CB),
-              ),
-            ),
-          ],
+    _locationPromptShown = true;
+    if (!mounted) return;
+
+    final openSettings = access == LocationAccess.permanentlyDenied ||
+        access == LocationAccess.serviceDisabled;
+    final text = context.textStyles;
+
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text('Enable location', style: text.titleLarge),
+        content: Text(
+          openSettings
+              ? LocationPermissionHelper.messageFor(access)
+              : 'Attendance Tracker needs your location while you use the app '
+                  'to verify you are inside an office geofence before punch in '
+                  'or out.',
+          style: text.bodyMedium,
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Color(0xFF424656)),
-            onPressed: () {},
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(openSettings ? 'Open Settings' : 'Allow location'),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Section
-            const Text(
-              'Hi, Alex Johnson',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0B1C30),
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Ready for a productive day?',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 16,
-                color: Color(0xFF424656),
-              ),
-            ),
-            const SizedBox(height: 24),
+    );
 
-            // Hero Status Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFD3E4FE)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0D0066FF),
-                    blurRadius: 6,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEFF4FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isPunchedIn ? Icons.door_back_door_outlined : Icons.sensor_door,
-                      size: 32,
-                      color: const Color(0xFF0050CB),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    isPunchedIn ? 'Punched In' : 'Punched Out',
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0B1C30),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'CURRENT STATUS',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                      color: Color(0xFF424656),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0x1ADDE3EC),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: isPunchedIn ? Colors.green : const Color(0xFF727687),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isPunchedIn 
-                              ? 'Active since ${attendance.lastPunchTime != null ? _formatTime(attendance.lastPunchTime!) : "Today 09:00 AM"}'
-                              : 'Inactive since ${attendance.lastPunchTime != null ? _formatTime(attendance.lastPunchTime!) : "Yesterday 5:00 PM"}',
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF5E656D),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+    if (!mounted) return;
 
-            // Location Verification Card
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFD3E4FE)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0D0066FF),
-                    blurRadius: 6,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFB7EAFF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.verified,
-                      color: Color(0xFF004E60),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Inside Office Zone',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0B1C30),
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Location verified successfully',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12,
-                            color: Color(0xFF424656),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: Color(0xFF727687),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 48),
+    if (accepted == true) {
+      if (openSettings) {
+        await openAppSettings();
+      } else {
+        access = await LocationPermissionHelper.requestWhileInUse();
+      }
+      if (mounted) {
+        await ref.read(attendanceProvider.notifier).requestLocationAccess();
+      }
+    }
+  }
 
-            // Fingerprint Punch Action Button
-            ElevatedButton(
-              onPressed: handlePunchAction,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0050CB),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                elevation: 4,
-                shadowColor: const Color(0x330050CB),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.fingerprint, size: 28),
-                  const SizedBox(width: 12),
-                  Text(
-                    isPunchedIn ? 'Punch Out' : 'Punch In',
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final text = context.textStyles;
+    final attendance = ref.watch(attendanceProvider);
+    final isPunchedIn = attendance.isPunchedIn;
+    final profile = ref.watch(userProfileProvider).value;
+    final isAdmin = ref.watch(isSuperAdminProvider);
+
+    final displayName = profile?.displayName ??
+        profile?.email.split('@').first ??
+        'Team Member';
+
+    Future<void> handlePunchAction() async {
+      await ref.read(attendanceProvider.notifier).punch();
+      final next = ref.read(attendanceProvider);
+      if (!context.mounted) return;
+      if (next.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage!),
+            backgroundColor: colors.error,
+          ),
+        );
+      } else if (!next.isPunching) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              next.isPunchedIn
+                  ? 'Punched in at ${next.matchedOffice?.name ?? 'office'}'
+                  : 'Punched out successfully',
             ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text(
-                'Tap to record your workspace clocking time',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  color: Color(0xFF424656),
+            backgroundColor: colors.primary,
+          ),
+        );
+      }
+    }
+
+    final canPunch = attendance.isInsideGeofence &&
+        !attendance.isLoading &&
+        !attendance.isPunching;
+
+    final zoneTitle = attendance.isInsideGeofence
+        ? 'Inside Office Zone'
+        : 'Outside Office Zone';
+    final zoneSubtitle = attendance.isInsideGeofence
+        ? attendance.matchedOffice?.name ?? 'Location verified'
+        : attendance.nearestOffice != null
+            ? '${attendance.nearestOffice!.name} · '
+                '${(attendance.distanceMeters ?? 0).toStringAsFixed(0)}m away'
+            : 'No nearby office found';
+
+    final lastPunchLabel = attendance.lastPunchTime != null
+        ? 'Last punch ${_formatTime(attendance.lastPunchTime!)}'
+        : 'No punch recorded today';
+
+    return AppScaffold(
+      title: AppConfig.appName,
+      currentRoute: RoutesName.dashboard,
+      body: RefreshIndicator(
+        onRefresh: isAdmin
+            ? () async {}
+            : () =>
+                ref.read(attendanceProvider.notifier).refreshLocationStatus(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: ModuleResponsive.screenPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hi, $displayName',
+                style: text.headlineMedium?.copyWith(fontSize: 28.sp),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                isAdmin
+                    ? 'Manage office geofences and attendance records.'
+                    : 'Ready for a productive day?',
+                style: text.bodyLarge?.copyWith(
+                  fontSize: 16.sp,
+                  color: colors.onSurface.withValues(alpha: 0.7),
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: 24.h),
+              if (isAdmin)
+                DashboardAdminSection(
+                  onManageLocations: () => context.push(RoutesName.locations),
+                  onViewAttendance: () =>
+                      context.push(RoutesName.attendanceMonitor),
+                )
+              else ...[
+                DashboardPunchStatusCard(
+                  isPunchedIn: isPunchedIn,
+                  lastPunchLabel: lastPunchLabel,
+                ),
+                SizedBox(height: 16.h),
+                DashboardGeofenceStatusCard(
+                  isInsideGeofence: attendance.isInsideGeofence,
+                  isLoading: attendance.isLoading,
+                  zoneTitle: zoneTitle,
+                  zoneSubtitle: attendance.isLoading
+                      ? 'Checking your location…'
+                      : zoneSubtitle,
+                  onRefresh: () => ref
+                      .read(attendanceProvider.notifier)
+                      .refreshLocationStatus(),
+                ),
+                if (attendance.needsLocationPermission) ...[
+                  SizedBox(height: 12.h),
+                  LocationPermissionBanner(
+                    message: attendance.errorMessage ??
+                        'Enable location while using the app to punch.',
+                    onEnable: () async {
+                      var access =
+                          await LocationPermissionHelper.checkStatus();
+                      if (access == LocationAccess.denied) {
+                        access =
+                            await LocationPermissionHelper.requestWhileInUse();
+                      }
+                      if (!context.mounted) return;
+                      if (access == LocationAccess.permanentlyDenied ||
+                          access == LocationAccess.serviceDisabled) {
+                        await openAppSettings();
+                      }
+                      await ref
+                          .read(attendanceProvider.notifier)
+                          .refreshLocationStatus();
+                    },
+                  ),
+                ] else if (attendance.errorMessage != null) ...[
+                  SizedBox(height: 12.h),
+                  Text(
+                    attendance.errorMessage!,
+                    style: text.bodyMedium?.copyWith(
+                      fontSize: 13.sp,
+                      color: colors.error,
+                    ),
+                  ),
+                ],
+                SizedBox(height: 48.h),
+                DashboardPunchButton(
+                  isPunchedIn: isPunchedIn,
+                  isPunching: attendance.isPunching,
+                  canPunch: canPunch,
+                  onPressed: canPunch ? handlePunchAction : null,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

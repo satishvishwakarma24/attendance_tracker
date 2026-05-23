@@ -1,4 +1,4 @@
-package com.satishvishwakarma24.attendance_tracker
+package com.satishvishwakarma.attendance_tracker
 
 import io.flutter.embedding.android.FlutterActivity
 

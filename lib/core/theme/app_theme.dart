@@ -1,41 +1,149 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class AppTheme {
-  static ThemeData get lightTheme => ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Inter',
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF0050CB),
-          onPrimary: Colors.white,
-          primaryContainer: Color(0xFF0066FF),
-          onPrimaryContainer: Color(0xFFF8F7FF),
-          secondary: Color(0xFF585F66),
-          onSecondary: Colors.white,
-          secondaryContainer: Color(0xFFDDE3EC),
-          onSecondaryContainer: Color(0xFF5E656D),
-          surface: Color(0xFFF8F9FF),
-          onSurface: Color(0xFF0B1C30),
-          surfaceContainerLow: Color(0xFFEFF4FF),
-          surfaceContainerLowest: Colors.white,
-        ),
-      );
+/// Central theme for the app. Screens should use [Theme.of] / [AppThemeX] only.
+abstract final class AppTheme {
+  /// Single brand color — Material 3 derives the full [ColorScheme] from this.
+  static const Color seedColor = Color(0xFF0050CB);
 
-  static ThemeData get darkTheme => ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Inter',
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF0066FF),
-          onPrimary: Colors.white,
-          primaryContainer: Color(0xFF0050CB),
-          onPrimaryContainer: Color(0xFFF8F7FF),
-          secondary: Color(0xFFB0B3BC),
-          onSecondary: Colors.black,
-          secondaryContainer: Color(0xFF2C2F36),
-          onSecondaryContainer: Color(0xFFEFF4FF),
-          surface: Color(0xFF121318),
-          onSurface: Color(0xFFE2E2E9),
-          surfaceContainerLow: Color(0xFF1A1B20),
-          surfaceContainerLowest: Color(0xFF0E0E12),
+  static ThemeData get light => _theme(Brightness.light);
+  static ThemeData get dark => _theme(Brightness.dark);
+
+  static ThemeData _theme(Brightness brightness) {
+    final scheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: brightness,
+    );
+    final text = _textTheme(scheme);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: scheme.surface,
+      textTheme: text,
+      primaryTextTheme: text,
+      appBarTheme: AppBarTheme(
+        backgroundColor: scheme.surfaceContainerLowest,
+        elevation: 0.5,
+        centerTitle: true,
+        foregroundColor: scheme.onSurface,
+        titleTextStyle: text.titleLarge,
+        iconTheme: IconThemeData(color: scheme.onSurface),
+      ),
+      cardTheme: CardThemeData(
+        color: scheme.surfaceContainerLowest,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: scheme.outlineVariant),
         ),
-      );
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: scheme.surfaceContainerLowest,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: scheme.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: scheme.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: scheme.primary, width: 1.5),
+        ),
+        hintStyle: GoogleFonts.lato(color: scheme.onSurfaceVariant),
+        prefixIconColor: scheme.onSurfaceVariant,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: scheme.primary,
+          foregroundColor: scheme.onPrimary,
+          elevation: 3,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          textStyle: GoogleFonts.lato(fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: scheme.surfaceContainerLowest,
+          foregroundColor: scheme.onSurface,
+          side: BorderSide(color: scheme.outlineVariant),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          textStyle: GoogleFonts.lato(fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: scheme.primary,
+        contentTextStyle: GoogleFonts.lato(color: scheme.onPrimary),
+      ),
+      dividerTheme: DividerThemeData(
+        color: scheme.outlineVariant,
+        thickness: 1,
+      ),
+      sliderTheme: SliderThemeData(
+        activeTrackColor: scheme.primary,
+        inactiveTrackColor: scheme.outlineVariant,
+        thumbColor: scheme.primary,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: scheme.primary,
+      ),
+    );
+  }
+
+  static TextTheme _textTheme(ColorScheme scheme) {
+    return GoogleFonts.latoTextTheme().copyWith(
+      headlineMedium: GoogleFonts.lato(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: scheme.onSurface,
+      ),
+      titleLarge: GoogleFonts.lato(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: scheme.primary,
+      ),
+      titleMedium: GoogleFonts.lato(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: scheme.onSurface,
+      ),
+      bodyLarge: GoogleFonts.lato(fontSize: 16, color: scheme.onSurface),
+      bodyMedium: GoogleFonts.lato(fontSize: 14, color: scheme.onSurfaceVariant),
+      bodySmall: GoogleFonts.lato(fontSize: 12, color: scheme.onSurfaceVariant),
+      labelLarge: GoogleFonts.lato(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: scheme.onSurface,
+      ),
+      labelSmall: GoogleFonts.lato(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.2,
+        color: scheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+extension AppThemeX on BuildContext {
+  ThemeData get appTheme => Theme.of(this);
+  ColorScheme get colors => appTheme.colorScheme;
+  TextTheme get textStyles => appTheme.textTheme;
 }
