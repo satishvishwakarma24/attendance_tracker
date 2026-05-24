@@ -310,4 +310,4 @@ flutter run
 
 ## License
 
-Private project for review and interview evaluation.
+Private project for review only.
