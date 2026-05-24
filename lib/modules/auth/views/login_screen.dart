@@ -119,6 +119,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _handleForgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !RegExp(r'^.+@.+\..+$').hasMatch(email)) {
+      _showSnack('Enter your email above to reset your password.', isError: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authRepositoryProvider).sendPasswordResetEmail(email);
+      _showSnack('Password reset email sent. Check your inbox.');
+    } on FirebaseAuthException catch (e) {
+      _showSnack(_authErrorMessage(e), isError: true);
+    } catch (e, s) {
+      Logger.error('Password reset failed', e, s);
+      _showSnack('Could not send reset email.', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
@@ -191,6 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 isLoading: _isLoading,
                 isSignUp: _isSignUp,
                 onSubmit: _handleEmailAuth,
+                onForgotPassword: _isSignUp ? null : _handleForgotPassword,
               ),
               SizedBox(height: 24.h),
               GoogleSignInButton(

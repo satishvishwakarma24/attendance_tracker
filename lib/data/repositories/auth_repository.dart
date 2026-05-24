@@ -22,6 +22,7 @@ class AuthRepository {
     required String password,
   }) async {
     try {
+      Logger.info('Email sign-in attempt for ${email.trim()}');
       return await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
@@ -37,6 +38,7 @@ class AuthRepository {
     required String password,
   }) async {
     try {
+      Logger.info('Email sign-up attempt for ${email.trim()}');
       return await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password,
@@ -49,6 +51,7 @@ class AuthRepository {
 
   Future<void> sendPasswordResetEmail(String email) async {
     try {
+      Logger.info('Password reset email sent for ${email.trim()}');
       await _auth.sendPasswordResetEmail(email: email.trim());
     } on FirebaseAuthException catch (e, s) {
       Logger.error('Password reset failed', e, s);
@@ -58,8 +61,10 @@ class AuthRepository {
 
   Future<UserCredential> signInWithGoogle() async {
     try {
+      Logger.info('Google sign-in attempt started');
       final account = await GoogleSignIn.instance.authenticate();
-      final idToken = account.authentication.idToken;
+      final googleAuth = account.authentication;
+      final idToken = googleAuth.idToken;
       if (idToken == null) {
         throw FirebaseAuthException(
           code: 'invalid-credential',
@@ -69,9 +74,8 @@ class AuthRepository {
         );
       }
 
-      // Firebase Auth only needs the ID token from authenticate().
-      // Do not call authorizationForScopes([]) — Android rejects empty scopes.
       final credential = GoogleAuthProvider.credential(idToken: idToken);
+      Logger.info('Google sign-in successful for ${account.email}');
       return await _auth.signInWithCredential(credential);
     } on GoogleSignInException catch (e, s) {
       Logger.error('Google sign-in failed', e, s);
@@ -92,6 +96,7 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
+    Logger.info('Signing out user');
     await Future.wait([
       _auth.signOut(),
       GoogleSignIn.instance.signOut(),

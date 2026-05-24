@@ -173,12 +173,31 @@ npx -y firebase-tools@latest login
 
 # 2. Activate Flutterfire globally (if not already done)
 dart pub global activate flutterfire_cli
+# Add to PATH if `flutterfire` is not found (or use full path):
+export PATH="$PATH:$HOME/.pub-cache/bin"
 
-# 3. Configure platforms
-flutterfire configure --project=attendance-tracker-demoapp
+# 3. Configure platforms (Android only if iOS CLI registration fails)
+flutterfire configure --project=attendance-tracker-demo-app --yes --platforms=android
+# iOS: add app in Firebase Console, then: --platforms=ios
 ```
 
-### 3. Google Sign-In Configurations
+### 3. Firebase Authentication (Email / Google)
+
+Email/Password and Google are enabled in Firebase Console → **Authentication** → **Sign-in method**. The app uses `firebase_auth` via `AuthRepository` and the login screen.
+
+**Email / password (works after Firebase init):**
+1. Tap **Sign Up**, enter email + password (min 6 chars), then **Create Account**.
+2. Or **Sign In** with an existing user.
+3. A `users/{uid}` doc is created in Firestore with `role: employee`.
+
+**Google Sign-In (requires SHA-1):**
+1. Android package is `com.satishvishwakarma.attendance_tracker.demo` (avoids SHA-1 conflicts with the same debug key on the old package name).
+2. Add debug SHA-1 on the **attendance_tracker_demo** Android app in Firebase → Project settings → **Add fingerprint**:
+   `9B:97:6A:9E:05:10:52:D7:A8:78:9B:2C:AD:37:79:C9:DD:29:C2:5C`
+3. Re-run `flutterfire configure --project=attendance-tracker-demo-app --yes --platforms=android` and ensure `google-services.json` includes an OAuth client with `client_type: 1`.
+4. `AppConfig.googleWebClientId` must match the **Web client ID** from Authentication → Google → Web SDK configuration.
+
+### 4. Google Sign-In Configurations
 
 To ensure Google Sign-In works seamlessly across targets, configure the SHA credentials:
 

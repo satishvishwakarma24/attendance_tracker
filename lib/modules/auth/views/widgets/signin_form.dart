@@ -12,6 +12,7 @@ class SignInForm extends StatefulWidget {
     required this.isLoading,
     required this.isSignUp,
     required this.onSubmit,
+    this.onForgotPassword,
   });
 
   final GlobalKey<FormState> formKey;
@@ -20,6 +21,7 @@ class SignInForm extends StatefulWidget {
   final bool isLoading;
   final bool isSignUp;
   final VoidCallback onSubmit;
+  final VoidCallback? onForgotPassword;
 
   @override
   State<SignInForm> createState() => _SignInFormState();
@@ -110,6 +112,22 @@ class _SignInFormState extends State<SignInForm> {
               return null;
             },
           ),
+          // if (!widget.isSignUp && widget.onForgotPassword != null) ...[
+          //   Align(
+          //     alignment: Alignment.centerRight,
+          //     child: TextButton(
+          //       onPressed: widget.isLoading ? null : widget.onForgotPassword,
+          //       child: Text(
+          //         'Forgot password?',
+          //         style: text.labelLarge?.copyWith(
+          //           fontSize: 13.sp,
+          //           color: colors.primary,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          //   SizedBox(height: 8.h),
+          // ],
           SizedBox(height: 24.h),
           ElevatedButton(
             onPressed: widget.isLoading ? null : widget.onSubmit,

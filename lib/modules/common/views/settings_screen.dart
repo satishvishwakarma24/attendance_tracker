@@ -6,6 +6,7 @@ import '/core/theme/app_theme.dart';
 import '/core/theme/theme_provider.dart';
 import '../widgets/module_responsive.dart';
 import '/modules/common/providers/session_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -64,6 +65,142 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          SizedBox(height: 24.h),
+           Text('Develop By', style: text.labelSmall),
+          SizedBox(height: 8.h),
+         Card(
+  elevation: 0,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18.r),
+    side: BorderSide(color: colors.outlineVariant),
+  ),
+  child: Column(
+    children: [
+      // Profile
+      ListTile(
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 8.h,
+        ),
+        leading: CircleAvatar(
+          radius: 24.r,
+          backgroundColor: colors.primaryContainer,
+          child: Icon(
+            Icons.person,
+            color: colors.primary,
+          ),
+        ),
+        title: Text(
+          'Satish Vishwakarma',
+          style: text.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: SelectableText(
+          'satish.vishwakarma.it@gmail.com',
+          style: text.bodyMedium,
+        ),
+      ),
+
+      Divider(height: 1, color: colors.outlineVariant),
+
+    
+      Divider(height: 1, color: colors.outlineVariant),
+
+      // GitHub
+      ListTile(
+        leading: Icon(
+          Icons.code,
+          color: colors.primary,
+        ),
+        title: Text(
+          'GitHub',
+          style: text.titleMedium,
+        ),
+        subtitle: Text(
+          'github.com/satishvishwakarma24',
+          style: text.bodySmall,
+        ),
+        trailing: Icon(
+          Icons.open_in_new,
+          size: 18.sp,
+          color: colors.primary,
+        ),
+        onTap: () async {
+          launchUrl(
+            Uri.parse(
+              'https://github.com/satishvishwakarma24/',
+            ),
+            mode: LaunchMode.externalApplication,
+          );
+        },
+      ),
+
+      Divider(height: 1, color: colors.outlineVariant),
+
+      // Portfolio
+      ListTile(
+        leading: Icon(
+          Icons.web_outlined,
+          color: colors.primary,
+        ),
+        title: Text(
+          'Portfolio',
+          style: text.titleMedium,
+        ),
+        subtitle: Text(
+          'satishvishwakarma24.github.io',
+          style: text.bodySmall,
+        ),
+        trailing: Icon(
+          Icons.open_in_new,
+          size: 18.sp,
+          color: colors.primary,
+        ),
+        onTap: () async {
+          launchUrl(
+            Uri.parse(
+              // 'https://satishvishwakarma24.github.io/satishvishwakarma24/',
+              'https://satishvishwakarma24.github.io/portfolio',
+            ),
+            mode: LaunchMode.externalApplication,
+          );
+        },
+      ),
+
+      Divider(height: 1, color: colors.outlineVariant),
+
+      // LinkedIn
+      ListTile(
+        leading: Icon(
+          Icons.business_center_outlined,
+          color: colors.primary,
+        ),
+        title: Text(
+          'LinkedIn',
+          style: text.titleMedium,
+        ),
+        subtitle: Text(
+          'linkedin.com/in/satish-vishwakarma',
+          style: text.bodySmall,
+        ),
+        trailing: Icon(
+          Icons.open_in_new,
+          size: 18.sp,
+          color: colors.primary,
+        ),
+        onTap: () async {
+          launchUrl(
+            Uri.parse(
+              'https://linkedin.com/in/satish-vishwakarma',
+            ),
+            mode: LaunchMode.externalApplication,
+          );
+        },
+      ),
+    ],
+  ),
+),
           SizedBox(height: 32.h),
           OutlinedButton.icon(
             onPressed: () => _confirmLogout(context, ref),
