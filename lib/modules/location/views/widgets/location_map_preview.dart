@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '/core/theme/app_theme.dart';
+import '/core/widgets/map_background_image.dart';
 import '../../../common/widgets/module_responsive.dart';
 
 class LocationMapPreview extends StatelessWidget {
@@ -11,9 +12,9 @@ class LocationMapPreview extends StatelessWidget {
     required this.officeLng,
     required this.deviceLat,
     required this.deviceLng,
-    required this.gpsPillLabel,
     required this.isFetchingGps,
-    required this.onUseGps,
+    required this.onCurrentLocation,
+    required this.onSelectOnMap,
   });
 
   final double radius;
@@ -21,12 +22,9 @@ class LocationMapPreview extends StatelessWidget {
   final double? officeLng;
   final double? deviceLat;
   final double? deviceLng;
-  final String gpsPillLabel;
   final bool isFetchingGps;
-  final VoidCallback onUseGps;
-
-  static const _mapImageUrl =
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBd_oFgQAyFXrYLfjhr5G8uCXM5BTMSqSG-EZfRH8_U4Z8Ec8TeMvPvNqwtwDwZ1LnyK_MdjTzVnvqYAcq8XWAj4kNwyKPr93BiYFjWyFj4TT941_BbACsKdAL_yRCA-stwF_vZHpWoEN_UCyUGD_8nNWU7YV8b0TjQtgxDTX4x5pLwakWmd_DoQCMvMm4QJFldbAu5div0Bg8FH5aDzO8yIFBjuMxgFi84hiz4Iayo4zHsd9ImZlFPktuhy4ZzhXsEL7AQy8jxbIGm';
+  final VoidCallback onCurrentLocation;
+  final VoidCallback onSelectOnMap;
 
   Offset _deviceOffset() {
     if (officeLat == null ||
@@ -56,119 +54,136 @@ class LocationMapPreview extends StatelessWidget {
     return Container(
       height: 200.h,
       width: double.infinity,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: colors.outline),
-        image: const DecorationImage(
-          image: NetworkImage(_mapImageUrl),
-          fit: BoxFit.cover,
-        ),
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          if (!hasOffice)
-            Center(
-              child: Text(
-                'Set coordinates or tap GPS',
-                style: text.labelLarge?.copyWith(fontSize: 13.sp),
-              ),
-            ),
-          if (hasOffice)
-            Center(
-              child: Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    width: circleSize,
-                    height: circleSize,
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.primary.withValues(alpha: 0.5),
-                        width: 2.w,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.location_on,
-                    color: colors.error,
-                    size: 36.sp,
-                  ),
-                ],
-              ),
-            ),
-          if (showDevice)
-            Center(
-              child: Transform.translate(
-                offset: deviceOffset,
-                child: Container(
-                  width: 14.w,
-                  height: 14.w,
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: colors.surfaceContainerLowest, width: 2.w),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withValues(alpha: 0.25),
-                        blurRadius: 6.r,
-                        spreadRadius: 2.r,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          Positioned(
-            bottom: 12.h,
-            right: 12.w,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: isFetchingGps ? null : onUseGps,
-                borderRadius: BorderRadius.circular(8.r),
+      child: MapBackgroundImage(
+        latitude: officeLat,
+        longitude: officeLng,
+        zoom: 14,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            if (!hasOffice)
+              Center(
                 child: Container(
                   padding:
                       EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: colors.surfaceContainerLowest.withValues(alpha: 0.9),
+                    color:
+                        colors.surfaceContainerLowest.withValues(alpha: 0.88),
                     borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(color: colors.outlineVariant),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isFetchingGps)
-                        SizedBox(
-                          width: 14.w,
-                          height: 14.w,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colors.primary,
-                          ),
-                        )
-                      else
-                        Icon(Icons.my_location,
-                            size: 14.sp, color: colors.primary),
-                      SizedBox(width: 6.w),
-                      Text(
-                        gpsPillLabel,
-                        style: text.labelLarge?.copyWith(
-                          fontSize: 12.sp,
-                          color: colors.onSurface,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'No Location Chosen',
+                    style: text.titleMedium?.copyWith(
+                      fontSize: 16.sp,
+                      color: colors.onSurface.withValues(alpha: 0.85),
+                    ),
                   ),
                 ),
               ),
+            if (hasOffice)
+              Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: circleSize,
+                      height: circleSize,
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.5),
+                          width: 2.w,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.location_on,
+                      color: colors.error,
+                      size: 36.sp,
+                    ),
+                  ],
+                ),
+              ),
+            if (showDevice)
+              Center(
+                child: Transform.translate(
+                  offset: deviceOffset,
+                  child: Container(
+                    width: 14.w,
+                    height: 14.w,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: colors.surfaceContainerLowest, width: 2.w),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.primary.withValues(alpha: 0.25),
+                          blurRadius: 6.r,
+                          spreadRadius: 2.r,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(
+              left: 16.w,
+              right: 16.w,
+              bottom: 12.h,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: isFetchingGps ? null : onCurrentLocation,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: colors.surfaceContainerLowest
+                            .withValues(alpha: 0.92),
+                      ),
+                      icon: isFetchingGps
+                          ? SizedBox(
+                              width: 14.w,
+                              height: 14.w,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colors.primary,
+                              ),
+                            )
+                          : Icon(Icons.my_location, size: 16.sp),
+                      label: Text(
+                        isFetchingGps ? 'Locating…' : 'Current Location',
+                        style: text.labelLarge?.copyWith(fontSize: 12.sp),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: isFetchingGps ? null : onSelectOnMap,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: colors.surfaceContainerLowest
+                            .withValues(alpha: 0.92),
+                      ),
+                      icon: Icon(Icons.map_outlined, size: 16.sp),
+                      label: Text(
+                        'Select on Map',
+                        style: text.labelLarge?.copyWith(fontSize: 12.sp),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -3,13 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
-
 import '/core/theme/app_theme.dart';
-import '/core/utils/location_permission_helper.dart';
 import '../../common/widgets/module_responsive.dart';
+import '/core/utils/location_permission_helper.dart';
 import '/core/utils/logger.dart';
 import '/data/repositories/location_repository.dart';
+import 'location_picker_screen.dart';
 import 'widgets/location_details_form.dart';
 import 'widgets/location_map_preview.dart';
 
@@ -35,7 +34,6 @@ class _AddLocationScreenState extends ConsumerState<AddLocationScreen> {
   bool _isLoading = false;
   bool _isFetchingGps = false;
   String? _loadError;
-  String _gpsPillLabel = 'Use GPS';
   double? _deviceLat;
   double? _deviceLng;
 
@@ -46,10 +44,6 @@ class _AddLocationScreenState extends ConsumerState<AddLocationScreen> {
     _lngController.addListener(_onCoordinatesChanged);
     if (widget.isEditing) {
       _loadExisting();
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _useCurrentLocation(silent: true);
-      });
     }
   }
 
@@ -64,32 +58,74 @@ class _AddLocationScreenState extends ConsumerState<AddLocationScreen> {
     return (lat, lng);
   }
 
-  Future<void> _useCurrentLocation({bool silent = false}) async {
+  Future<bool?> _promptLocationAccess(LocationAccess access) {
+    final text = context.textStyles;
+    final openSettings =
+        LocationPermissionHelper.needsSystemSettings(access);
+
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Location required', style: text.titleLarge),
+        content: Text(
+          openSettings
+              ? LocationPermissionHelper.messageFor(access)
+              : 'Allow location while using the app to use your current '
+                  'position for this office.',
+          style: text.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(openSettings ? 'Open Settings' : 'Allow location'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<LocationAccess> _ensureLocationForGps() async {
+    var access = await LocationPermissionHelper.checkStatus();
+    if (access == LocationAccess.granted) {
+      return LocationAccess.granted;
+    }
+
+    if (LocationPermissionHelper.needsSystemSettings(access)) {
+      if (!mounted) return access;
+      final accepted = await _promptLocationAccess(access);
+      if (accepted == true) {
+        await LocationPermissionHelper.openSettingsFor(access);
+      }
+      return access;
+    }
+
+    if (!mounted) return access;
+    final accepted = await _promptLocationAccess(access);
+    if (accepted != true) {
+      return LocationAccess.denied;
+    }
+
+    return LocationPermissionHelper.requestWhileInUse();
+  }
+
+  Future<void> _useCurrentLocation() async {
     if (_isFetchingGps) return;
 
-    setState(() {
-      _isFetchingGps = true;
-      _gpsPillLabel = 'Locating…';
-    });
+    setState(() => _isFetchingGps = true);
 
     try {
-      final access = await LocationPermissionHelper.ensureWhileInUse();
+      final access = await _ensureLocationForGps();
       if (access != LocationAccess.granted) {
         if (!mounted) return;
-        setState(() {
-          _isFetchingGps = false;
-          _gpsPillLabel = _labelForAccess(access);
-        });
-        if (!silent) {
+        setState(() => _isFetchingGps = false);
+        if (!LocationPermissionHelper.needsSystemSettings(access)) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(LocationPermissionHelper.messageFor(access)),
-              action: access == LocationAccess.permanentlyDenied
-                  ? const SnackBarAction(
-                      label: 'Settings',
-                      onPressed: openAppSettings,
-                    )
-                  : null,
             ),
           );
         }
@@ -109,45 +145,50 @@ class _AddLocationScreenState extends ConsumerState<AddLocationScreen> {
         _deviceLat = position.latitude;
         _deviceLng = position.longitude;
         _isFetchingGps = false;
-        _gpsPillLabel = 'GPS Active';
       });
 
-      if (!silent) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Coordinates set from your current location'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Coordinates set from your current location'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } catch (e, s) {
       Logger.error('Failed to read GPS for add location', e, s);
       if (!mounted) return;
-      setState(() {
-        _isFetchingGps = false;
-        _gpsPillLabel = 'Retry GPS';
-      });
-      if (!silent) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not read GPS. Try again or enter coordinates.'),
-          ),
-        );
-      }
+      setState(() => _isFetchingGps = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not read GPS. Try again or enter coordinates.'),
+        ),
+      );
     }
   }
 
-  String _labelForAccess(LocationAccess access) {
-    switch (access) {
-      case LocationAccess.granted:
-        return 'GPS Active';
-      case LocationAccess.serviceDisabled:
-        return 'GPS off';
-      case LocationAccess.permanentlyDenied:
-        return 'No access';
-      case LocationAccess.denied:
-        return 'Use GPS';
+  Future<void> _openLocationPicker() async {
+    final lat = double.tryParse(_latController.text.trim());
+    final lng = double.tryParse(_lngController.text.trim());
+
+    final result = await Navigator.of(context).push<LocationPickerResult>(
+      MaterialPageRoute(
+        builder: (_) => LocationPickerScreen(
+          initialLatitude: lat,
+          initialLongitude: lng,
+        ),
+      ),
+    );
+    if (!mounted || result == null) return;
+
+    _latController.text = result.latitude.toStringAsFixed(6);
+    _lngController.text = result.longitude.toStringAsFixed(6);
+    _deviceLat = result.latitude;
+    _deviceLng = result.longitude;
+    if (_nameController.text.trim().isEmpty &&
+        result.suggestedName != null &&
+        result.suggestedName!.trim().isNotEmpty) {
+      _nameController.text = result.suggestedName!.trim();
     }
+    setState(() {});
   }
 
   Future<void> _loadExisting() async {
@@ -309,9 +350,9 @@ class _AddLocationScreenState extends ConsumerState<AddLocationScreen> {
                         officeLng: _officeCoordinates.$2,
                         deviceLat: _deviceLat,
                         deviceLng: _deviceLng,
-                        gpsPillLabel: _gpsPillLabel,
                         isFetchingGps: _isFetchingGps,
-                        onUseGps: () => _useCurrentLocation(),
+                        onCurrentLocation: _useCurrentLocation,
+                        onSelectOnMap: _openLocationPicker,
                       ),
                       SizedBox(height: 24.h),
                       LocationDetailsForm(
@@ -322,9 +363,8 @@ class _AddLocationScreenState extends ConsumerState<AddLocationScreen> {
                         onRadiusChanged: (val) => setState(() => _radius = val),
                         isEditing: widget.isEditing,
                         isActive: _isActive,
-                        onActiveChanged: (val) => setState(() => _isActive = val),
-                        isFetchingGps: _isFetchingGps,
-                        onUseCurrentLocation: () => _useCurrentLocation(),
+                        onActiveChanged: (val) =>
+                            setState(() => _isActive = val),
                         isSaving: _isSaving,
                         onSave: _saveLocation,
                       ),

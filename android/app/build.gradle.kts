@@ -6,6 +6,26 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+fun readMapsApiKey(): String {
+    val envFile = rootProject.file("../.env")
+    if (!envFile.exists()) return ""
+    return envFile.readLines()
+        .map { it.trim() }
+        .firstOrNull { it.startsWith("GOOGLE_MAPS_API_KEY=") }
+        ?.substringAfter("=")
+        ?.trim()
+        ?.removeSurrounding("\"")
+        ?.removeSurrounding("'")
+        ?: ""
+}
+
+fun syncMapsKeyToIos(key: String) {
+    if (key.isBlank()) return
+    val iosConfig = rootProject.file("../ios/Flutter/Maps.xcconfig")
+    iosConfig.parentFile.mkdirs()
+    iosConfig.writeText("GOOGLE_MAPS_API_KEY=$key\n")
+}
+
 android {
     namespace = "com.satishvishwakarma.attendance_tracker.demo"
     compileSdk = flutter.compileSdkVersion
@@ -29,6 +49,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        val mapsApiKey = readMapsApiKey()
+        syncMapsKeyToIos(mapsApiKey)
+        manifestPlaceholders["mapsApiKey"] = mapsApiKey
     }
 
     buildTypes {

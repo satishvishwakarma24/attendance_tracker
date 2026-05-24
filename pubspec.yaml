@@ -23,6 +23,7 @@ dependencies:
 
   # Location 
   geolocator: ^14.0.2
+  geocoding: ^4.0.0
 
   # UI & utilities
   flutter_screenutil: ^5.9.3
@@ -33,11 +34,22 @@ dependencies:
   flutter_native_splash: ^2.4.1
   google_fonts: ^8.1.0
   url_launcher: ^6.3.2
+  envied: ^1.3.5
+  google_maps_flutter: ^2.17.0
+  google_maps_flutter_android: ^2.19.8
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+
+  # envied
+  envied_generator: ^1.3.5
+  build_runner: ^2.15.0
+
+  # dev tools
   flutter_launcher_icons: ^0.14.1
   change_app_package_name: ^1.5.0
   rename: ^3.1.0
@@ -47,6 +59,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/map_background.jpg
 
 flutter_native_splash:
   color: "#FFFFFF"

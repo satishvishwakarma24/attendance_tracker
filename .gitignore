@@ -140,6 +140,7 @@ storage.rules
 # Environment / Secrets
 # =========================
 .env
+ios/Flutter/Maps.xcconfig
 .env.*
 .env.local
 .env.dev
@@ -159,6 +160,7 @@ config.private.*
 # API keys
 apikeys.json
 api-keys.json
+**/env_config.g.dart
 
 # =========================
 # Backend Credentials

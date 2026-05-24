@@ -4,17 +4,17 @@ A location-aware attendance app built with **Flutter**, **Riverpod**, **GoRouter
 
 Employees punch in and out only when inside a registered office geofence. **Super admins** manage office locations (CRUD) and monitor organization-wide attendance in real time.
 
-> **Status:** MVP complete — auth, geofenced punch, location CRUD, employee history, and admin attendance log are implemented.
+> **Status:** Complete — email/Google auth, geofenced punch in/out, office location CRUD with map picker, employee session history, admin attendance monitor, dark mode, and optional Google Maps (OSM fallback).
 
 ---
 
 ## Screenshots
 
-### Authentication & permissions
+### Authentication
 
-| Login | Location permission |
-| :---: | :---: |
-| ![Login screen](assets/screenshots/login.png) | ![Location permission](assets/screenshots/get-permission.png) |
+| Login |
+| :---: |
+| ![Login screen](assets/screenshots/login.png) |
 
 ### Employee
 
@@ -24,9 +24,13 @@ Employees punch in and out only when inside a registered office geofence. **Supe
 
 ### Super Admin
 
-| Admin dashboard | Office locations | Add location |
-| :---: | :---: | :---: |
-| ![Admin dashboard](assets/screenshots/admin-dashboard.png) | ![Location list](assets/screenshots/location-list.png) | ![Add location](assets/screenshots/add-location.png) |
+| Admin dashboard | Office locations |
+| :---: | :---: |
+| ![Admin dashboard](assets/screenshots/admin-dashboard.png) | ![Office locations list](assets/screenshots/office-locations-list.png) |
+
+| Add location | Select on map |
+| :---: | :---: |
+| ![Add location](assets/screenshots/add-location.png) | ![Select location on map](assets/screenshots/select-location.png) |
 
 ---
 
@@ -35,7 +39,13 @@ Employees punch in and out only when inside a registered office geofence. **Supe
 | Role | Capabilities | Core Workflows |
 | :--- | :--- | :--- |
 | **Employee** | Secure auth · Geofencing · Session history · Dark mode | Sign in with email/password or Google. View geofence status (inside/outside + distance). Punch in/out only inside an active office radius. Review past sessions with color-coded IN/OUT times and duration. |
-| **Super Admin** | Location CRUD · Attendance monitor · No punch UI | Add/edit/delete office geofences (name, lat, lng, radius). View live attendance log (latest 50 records). Each card groups a user's punch-in and punch-out in one session. |
+| **Super Admin** | Location CRUD · Map picker · Attendance monitor · No punch UI | Add/edit/delete office geofences (name, lat, lng, radius). Pick coordinates on an interactive map (Google Maps or OSM fallback). View live attendance log (latest 50 records). Each card groups a user's punch-in and punch-out in one session. |
+
+### Office locations & maps
+
+- **Add / edit location** — name, address search (`geocoding`), radius slider, and a static map preview when a Google Maps key is configured
+- **Select on map** — full-screen picker (`InteractivePickerMap`); uses native Google Maps when `GOOGLE_MAPS_API_KEY` is set, otherwise OpenStreetMap tiles
+- **API key** — stored in `.env`, obfuscated via `envied` (`lib/config/constant/env_config.dart`); never committed
 
 ### Geofencing
 
@@ -76,11 +86,14 @@ graph TD
 
 ```text
 lib/
-├── config/           # AppConfig, GoRouter, Firebase providers
+├── config/
+│   ├── constant/     # AppConfig, EnvConfig (Maps API key via envied)
+│   ├── routes/       # GoRouter + role guards
+│   └── services/     # Firebase, Google Sign-In, Maps SDK warmup
 ├── core/
 │   ├── theme/        # Material 3 theme, punch IN/OUT colors, context extensions
-│   ├── utils/        # Logger, geofence, location permissions
-│   └── widgets/      # Shared UI (e.g. PunchSessionTimesBar)
+│   ├── utils/        # Logger, geofence, permissions, geocoding, static/OSM map URLs
+│   └── widgets/      # Shared UI (PunchSessionTimesBar, InteractivePickerMap, …)
 ├── data/
 │   ├── models/
 │   └── repositories/ # Auth, attendance, sessions, locations
@@ -232,6 +245,36 @@ Enable **Email/Password** and **Google** in Firebase Console → Authentication 
 cd android && ./gradlew signingReport
 ```
 
+### 4. Google Maps API key
+
+The **Add Location** preview uses **Google Static Maps** (image). **Select on Map** uses the native **Maps SDK** (smooth pan/zoom, same gestures as Google Maps). Without a key, the picker falls back to **OpenStreetMap** tiles via `flutter_map`.
+
+1. Copy the env template and add your key (never commit `.env`):
+
+   ```bash
+   cp .env.example .env
+   # Edit .env: GOOGLE_MAPS_API_KEY=your_key_here
+   ```
+
+2. Generate obfuscated config:
+
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+3. In [Google Cloud Console](https://console.cloud.google.com/google/maps-apis), enable:
+
+   - **Maps SDK for Android**
+   - **Maps SDK for iOS** (if you build for iOS)
+   - **Maps Static API** (small preview on Add Location)
+   - Link billing (free trial credits apply)
+
+4. Android reads the key from `.env` when Gradle runs (`manifestPlaceholders`). iOS syncs to `ios/Flutter/Maps.xcconfig` on the next Android or Gradle sync; then run `cd ios && pod install` once.
+
+5. **Application restrictions:** For the interactive map, restrict the key to your Android package + debug/release SHA-1 (and iOS bundle ID). Static map previews loaded over HTTP may need **API-only** restriction while testing.
+
+6. Full restart after changing `.env`: `flutter run` (hot reload is not enough).
+
 ---
 
 ## Device configuration
@@ -276,12 +319,14 @@ flutter run
 
 ### Demo checklist
 
-- [ ] Super admin adds a location in Firestore / Locations screen
+- [ ] Super admin adds a location (form + **Select on Map** picker)
+- [ ] Employee grants location permission when prompted on first punch
 - [ ] Employee punches in only inside geofence radius
 - [ ] Employee punches out and sees session in User History
 - [ ] Super admin sees grouped in/out cards in Attendance Log
 - [ ] Renamed location shows updated name in history (live lookup)
 - [ ] Security rules deny cross-user writes
+- [ ] Maps: with `GOOGLE_MAPS_API_KEY` set, native picker + static preview; without key, OSM tiles still work
 
 ---
 
@@ -291,9 +336,10 @@ flutter run
 | :--- | :--- |
 | State | `flutter_riverpod` |
 | Routing | `go_router` |
-| Backend | `firebase_core`, `firebase_auth`, `cloud_firestore` |
-| Location | `geolocator`, `permission_handler` |
-| UI | Material 3, `google_fonts` (Inter), `flutter_screenutil` |
+| Backend | `firebase_core`, `firebase_auth`, `cloud_firestore`, `google_sign_in` |
+| Location | `geolocator`, `geocoding`, `permission_handler` |
+| Maps | `google_maps_flutter`, `flutter_map` + `latlong2` (OSM fallback), `envied` for API key |
+| UI | Material 3, `google_fonts` (Inter), `flutter_screenutil`, `flutter_native_splash` |
 | Logging | `talker` via `lib/core/utils/logger.dart` |
 
 ---

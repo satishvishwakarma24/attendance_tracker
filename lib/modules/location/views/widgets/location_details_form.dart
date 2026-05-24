@@ -14,8 +14,6 @@ class LocationDetailsForm extends StatelessWidget {
     required this.isEditing,
     required this.isActive,
     required this.onActiveChanged,
-    required this.isFetchingGps,
-    required this.onUseCurrentLocation,
     required this.isSaving,
     required this.onSave,
   });
@@ -28,8 +26,6 @@ class LocationDetailsForm extends StatelessWidget {
   final bool isEditing;
   final bool isActive;
   final ValueChanged<bool> onActiveChanged;
-  final bool isFetchingGps;
-  final VoidCallback onUseCurrentLocation;
   final bool isSaving;
   final VoidCallback onSave;
 
@@ -50,7 +46,8 @@ class LocationDetailsForm extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Office Name', style: text.labelLarge?.copyWith(fontSize: 14.sp)),
+              Text('Office Name',
+                  style: text.labelLarge?.copyWith(fontSize: 14.sp)),
               SizedBox(height: 8.h),
               TextField(
                 controller: nameController,
@@ -108,30 +105,31 @@ class LocationDetailsForm extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 8.h),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: isFetchingGps ? null : onUseCurrentLocation,
-                  icon: isFetchingGps
-                      ? SizedBox(
-                          width: 16.w,
-                          height: 16.w,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colors.primary,
-                          ),
-                        )
-                      : Icon(Icons.my_location, size: 18.sp),
-                  label: Text(
-                    'Use current location',
-                    style: text.labelLarge?.copyWith(
-                      fontSize: 14.sp,
-                      color: colors.primary,
-                    ),
-                  ),
-                ),
-              ),
+              // Moved to map preview "Current Location" button — do not remove.
+              // SizedBox(height: 8.h),
+              // Align(
+              //   alignment: Alignment.centerRight,
+              //   child: TextButton.icon(
+              //     onPressed: isFetchingGps ? null : onUseCurrentLocation,
+              //     icon: isFetchingGps
+              //         ? SizedBox(
+              //             width: 16.w,
+              //             height: 16.w,
+              //             child: CircularProgressIndicator(
+              //               strokeWidth: 2,
+              //               color: colors.primary,
+              //             ),
+              //           )
+              //         : Icon(Icons.my_location, size: 18.sp),
+              //     label: Text(
+              //       'Use current location',
+              //       style: text.labelLarge?.copyWith(
+              //         fontSize: 14.sp,
+              //         color: colors.primary,
+              //       ),
+              //     ),
+              //   ),
+              // ),
               SizedBox(height: 16.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -157,10 +155,11 @@ class LocationDetailsForm extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('10m', style: text.bodySmall?.copyWith(fontSize: 12.sp)),
-                  Text('500m', style: text.bodySmall?.copyWith(fontSize: 12.sp)),
+                  Text('500m',
+                      style: text.bodySmall?.copyWith(fontSize: 12.sp)),
                 ],
               ),
-             // temo commneted - do not remove this comment
+              // temo commneted - do not remove this comment
               // if (isEditing) ...[
               //   SizedBox(height: 8.h),
               //   SwitchListTile(

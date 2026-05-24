@@ -79,4 +79,21 @@ abstract final class LocationPermissionHelper {
         return 'Turn on device location (GPS) to check office zones and punch.';
     }
   }
+
+  /// Opens the system screen appropriate for [access] (GPS vs app permission).
+  static Future<void> openSettingsFor(LocationAccess access) async {
+    switch (access) {
+      case LocationAccess.serviceDisabled:
+        await Geolocator.openLocationSettings();
+      case LocationAccess.permanentlyDenied:
+        await openAppSettings();
+      case LocationAccess.granted:
+      case LocationAccess.denied:
+        break;
+    }
+  }
+
+  static bool needsSystemSettings(LocationAccess access) =>
+      access == LocationAccess.serviceDisabled ||
+      access == LocationAccess.permanentlyDenied;
 }

@@ -1,15 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'package:attendance_tracker/config/services/initialize_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
-import 'config/constant/app_config.dart';
-import 'core/utils/logger.dart';
-import 'firebase_options.dart';
 import 'app.dart';
 
 /// Main entry point of the application
@@ -35,7 +30,7 @@ void main() async {
   ]);
 
   // Initialize Firebase and third-party services
-  await _initializeServices();
+  await InitializeServices().initialize();
 
   // Remove native splash screen after setup completion
   FlutterNativeSplash.remove();
@@ -50,39 +45,4 @@ void main() async {
       ),
     ),
   );
-}
-
-/// Initializes Firebase and external services
-Future<void> _initializeServices() async {
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
-    const webClientId = AppConfig.googleWebClientId;
-
-    // Validate Google Sign-In configuration for Android
-    if (!kIsWeb &&
-        defaultTargetPlatform == TargetPlatform.android &&
-        webClientId.isEmpty) {
-      Logger.warning(
-        'Google Web Client ID is missing. Google Sign-In may not work properly on Android.',
-      );
-    }
-
-    await GoogleSignIn.instance.initialize(
-      serverClientId: webClientId.isEmpty ? null : webClientId,
-    );
-
-    Logger.info(
-        'Firebase and authentication services initialized successfully.');
-  } catch (error, stackTrace) {
-    Logger.error(
-      'Application initialization failed while setting up Firebase or Google Sign-In',
-      error,
-      stackTrace,
-    );
-  } finally {
-    Logger.info('Launching application...');
-  }
 }
