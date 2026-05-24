@@ -12,46 +12,229 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# IntelliJ / IDE
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# VS Code / Cursor
 .vscode/
 .cursor/
 
-# Flutter/Dart/Pub related
+# Flutter / Dart / Pub
+# =========================
 **/doc/api/
 **/ios/Flutter/.last_build_id
+
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+coverage/
 
-# Symbolication related
+# Generated
+.generated/
+.generated_plugin_registrant.dart
+
+# FlutterFire generated
+lib/firebase_options.dart
+**/firebase_options.dart
+
+# Symbolication / Obfuscation
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# Android
 /android/app/debug
 /android/app/profile
 /android/app/release
 
-# Firebase secrets — never commit
-firebase.*.*
+# APK / AAB
+*.apk
+*.aab
+
+# Signing / Keystore
+*.jks
+*.keystore
+*.p12
+*.pem
+
+# Local config
+local.properties
+key.properties
+
+# Gradle
+.gradle/
+**/captures/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Signing / Provisioning
+*.mobileprovision
+*.p8
+*.cer
+*.developerprofile
+
+# Xcode
+DerivedData/
+*.xcworkspace
+xcuserdata/
+
+# =========================
+# Firebase (IMPORTANT)
+# =========================
+
+# Firebase configs
 firebase.json
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Firebase emulator
+firebase-export-*
+firebase-export/
+.emulators/
+
+# Firebase service accounts
 *firebase-adminsdk*.json
+*serviceAccount*.json
+service-account.json
+
+# Flutter Firebase configs
 **/google-services.json
 **/GoogleService-Info.plist
-**/firebase_options.dart
-lib/firebase_options.dart
+
+# Firestore / Storage generated
+firestore.indexes.json
+firestore.rules
+storage.rules
+
+# Firebase cache
+.firebase/
+.firebase-cache/
+
+# =========================
+# Environment / Secrets
+# =========================
 .env
 .env.*
+.env.local
+.env.dev
+.env.development
+.env.production
+.env.staging
+.env.test
+
+# Secret files
+secrets.json
+secret.json
+credentials.json
+credential.json
+config.secret.*
+config.private.*
+
+# API keys
+apikeys.json
+api-keys.json
+
+# =========================
+# Backend Credentials
+# =========================
+
+# Node.js
+node_modules/
+
+# Python
+venv/
+.env/
+__pycache__/
+
+# Java
+target/
+
+# Rust
+target/
+
+# Go
+bin/
+
+# =========================
+# Cloud Credentials
+# =========================
+
+# Google Cloud
+gcloud-service-key.json
+
+# AWS
+.aws/
+aws-credentials.json
+
+# Azure
+.azure/
+
+# =========================
+# Database
+# =========================
+
+# SQLite
+*.sqlite
+*.sqlite3
+*.db
+
+# Mongo dump
+dump/
+
+# PostgreSQL dumps
+*.sql
+
+# =========================
+# CI/CD Secrets
+# =========================
+.github/*.env
+.github/secrets/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# =========================
+# Misc Sensitive Files
+# =========================
+*.key
+*.crt
+*.csr
+*.der
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Mac hidden files
+.AppleDouble
+.LSOverride
