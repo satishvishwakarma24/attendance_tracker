@@ -1,100 +1,123 @@
 # 📍 Attendance Tracker (WorkSync)
 
-A premium, location-aware attendance tracking application built with **Flutter**, **Riverpod (State Management)**, **GoRouter (Routing)**, and **Firebase**. 
+A location-aware attendance app built with **Flutter**, **Riverpod**, **GoRouter**, and **Firebase**.
 
-Employees can punch in and out only when they are physically inside registered office geofences. **Super Admins** have a dedicated view where they can manage office locations (CRUD operations) and monitor real-time attendance logs for the entire organization.
+Employees punch in and out only when inside a registered office geofence. **Super admins** manage office locations (CRUD) and monitor organization-wide attendance in real time.
 
-> 📊 **MVP Progress:** ~85% complete. For the full status and active checklist, see [mvp-tracker.md](mvp-tracker.md).
+> **Status:** MVP complete — auth, geofenced punch, location CRUD, employee history, and admin attendance log are implemented.
 
 ---
 
-## 🌟 Key Features
+## Screenshots
+
+### Authentication & permissions
+
+| Login | Location permission |
+| :---: | :---: |
+| ![Login screen](assets/screenshots/login.png) | ![Location permission](assets/screenshots/get-permission.png) |
+
+### Employee
+
+| Dashboard | Punch history | Settings |
+| :---: | :---: | :---: |
+| ![Employee dashboard](assets/screenshots/user-dashboard.png) | ![User history](assets/screenshots/user-history.png) | ![Settings](assets/screenshots/settings.png) |
+
+### Super Admin
+
+| Admin dashboard | Office locations | Add location |
+| :---: | :---: | :---: |
+| ![Admin dashboard](assets/screenshots/admin-dashboard.png) | ![Location list](assets/screenshots/location-list.png) | ![Add location](assets/screenshots/add-location.png) |
+
+---
+
+## Key Features
 
 | Role | Capabilities | Core Workflows |
 | :--- | :--- | :--- |
-| **Employee** | • Secure Authentication<br>• Real-time Geofencing<br>• Session History | • Sign in with Email/Password or Google Sign-In.<br>• View current geofence status (Inside/Outside office radius).<br>• Punch In/Out when inside the active radius of any office.<br>• View past attendance sessions and active work hours. |
-| **Super Admin** | • Office Management (CRUD)<br>• Attendance Monitoring<br>• Administrative Immunity | • Dynamic CRUD controls for registered locations (name, lat, lng, radius).<br>• View all employee attendance logs in real time (up to 50 records).<br>• Excluded from punching in/out (no punch UI on admin accounts). |
+| **Employee** | Secure auth · Geofencing · Session history · Dark mode | Sign in with email/password or Google. View geofence status (inside/outside + distance). Punch in/out only inside an active office radius. Review past sessions with color-coded IN/OUT times and duration. |
+| **Super Admin** | Location CRUD · Attendance monitor · No punch UI | Add/edit/delete office geofences (name, lat, lng, radius). View live attendance log (latest 50 records). Each card groups a user's punch-in and punch-out in one session. |
 
-### 🧭 Dynamic Geofencing Logic
-The geofencing mechanism leverages the `geolocator` package under a centralized `GeofenceService` (`lib/core/utils/geofence_service.dart`). It continuously evaluates the user's current GPS coordinates against all active office locations.
-- **Inside Zone**: The "Punch In/Out" action is fully enabled.
-- **Outside Zone**: The button is safely disabled, and the UI displays the nearest office location along with the remaining distance in meters.
+### Geofencing
+
+Uses `geolocator` via `GeofenceService` (`lib/core/utils/geofence_service.dart`):
+
+- **Inside zone** — punch button enabled
+- **Outside zone** — punch disabled; UI shows nearest office and distance in meters
+
+### Attendance history UI
+
+- **Employee (User History)** — one card per work session; green **IN** / orange **OUT** times on a single row with shared date (`dd/MM/yyyy` + `HH:mm:ss`)
+- **Super Admin (Attendance Log)** — raw punch records grouped into in/out sessions per user; avatar, email, location, duration chip, and the same color-coded time bar
+- **Live location names** — history resolves the current office name from `locations/{id}` (stored `locationName` in `sessions`/`attendance` is a snapshot at punch time)
 
 ---
 
-## 📐 Architecture & Project Flow
+## Architecture
 
-The app follows a **Feature-First / Clean Architecture Hybrid** designed for scalability, complete testability, and separation of concerns.
+Feature-first layout with repositories owning all Firestore access and Riverpod providers exposing state to widgets.
 
 ```mermaid
 graph TD
-    subgraph UI Layer [Modules & UI]
-        V[Login / Dashboard / Locations / Monitor Screens] -->|Watch / Read| P[Riverpod Providers]
+    subgraph UI [Modules & UI]
+        V[Login / Dashboard / Locations / History / Monitor] -->|watch| P[Riverpod Providers]
     end
 
-    subgraph Business Logic Layer [State Management]
-        P -->|Invoke Queries / Mutations| R[Repositories]
+    subgraph Logic [State]
+        P -->|call| R[Repositories]
     end
 
-    subgraph Data Layer [Data Source & Models]
-        R -->|Fetch / Write| FS[(Cloud Firestore)]
-        R -->|Map Documents| M[Models: UserProfile, UserSession, OfficeLocationModel, AttendanceRecord]
+    subgraph Data [Firestore]
+        R --> FS[(Cloud Firestore)]
+        R --> M[Models: UserProfile, UserSession, OfficeLocationModel, AttendanceRecord]
     end
-
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px;
-    classDef highlight fill:#e1f5fe,stroke:#03a9f4,stroke-width:2px;
-    class FS highlight;
 ```
 
-### 📂 Directory Structure
+### Directory structure
 
 ```text
 lib/
-├── config/                  # Global application configurations
-│   ├── constant/            # AppConfig, constant values
-│   ├── routes/              # GoRouter setup, Route guards, navigation stack
-│   └── services/            # Firebase provider setups
-├── core/                    # Core shared components (Theme, Utilities)
-│   ├── firebase/            # Firebase base setup providers
-│   ├── theme/               # Material 3 dark/light palettes, BuildContext extensions
-│   └── utils/               # Talker logger, Geofencing, Location permissions
-├── data/                    # Data models and Firebase repositories
-│   ├── models/              # Type-safe models (UserProfile, UserSession, etc.)
-│   └── repositories/        # Repositories executing Firestore operations
-├── modules/                 # Feature-based presentation folder
-│   ├── auth/                # Login, email register, and Google Sign-In widgets
-│   ├── dashboard/           # Employee/Admin landing screen, Punch button, geofencing cards
-│   ├── location/            # Admin office management, interactive radius configuration
-│   ├── admin/               # Organization-wide live attendance monitor
-│   └── common/              # Shared shell, app-bars, user history & settings screens
-├── app.dart                 # App widget routing setup
-└── main.dart                # Native binding, splash dismissal & initialization entrypoint
+├── config/           # AppConfig, GoRouter, Firebase providers
+├── core/
+│   ├── theme/        # Material 3 theme, punch IN/OUT colors, context extensions
+│   ├── utils/        # Logger, geofence, location permissions
+│   └── widgets/      # Shared UI (e.g. PunchSessionTimesBar)
+├── data/
+│   ├── models/
+│   └── repositories/ # Auth, attendance, sessions, locations
+├── modules/
+│   ├── auth/         # Login, sign-up, Google Sign-In
+│   ├── dashboard/    # Punch flow, geofence status cards
+│   ├── location/     # Admin location list & add/edit
+│   ├── admin/        # Attendance monitor (grouped session cards)
+│   └── common/       # App shell, nav bar, user history, settings
+├── app.dart
+└── main.dart
 ```
 
 ---
 
-## 💾 Firestore Data Model
-
-The application uses an extremely secure, structured Cloud Firestore layout.
+## Firestore data model
 
 ### `users/{uid}`
-Stores profile details and security roles.
+
 ```json
 {
-  "email": "employee@worksync.com",
+  "email": "employee@example.com",
   "displayName": "Jane Doe",
-  "role": "employee", // Options: 'employee' | 'super_admin'
+  "role": "employee",
   "createdAt": "Timestamp"
 }
 ```
 
+Roles: `employee` | `super_admin`
+
 ### `locations/{locationId}`
-Configurable office fences created by Super Admins.
+
 ```json
 {
-  "name": "Headquarters",
+  "name": "Google Office - USA",
   "latitude": 37.421998,
-  "longitude": -122.084000,
+  "longitude": -122.084,
   "radiusMeters": 100.0,
   "isActive": true,
   "createdBy": "admin-uid",
@@ -103,27 +126,31 @@ Configurable office fences created by Super Admins.
 ```
 
 ### `attendance/{recordId}`
-Raw transactional records representing physical check-ins and check-outs.
+
+Raw punch events (one document per in or out).
+
 ```json
 {
   "userId": "user-uid",
-  "userEmail": "employee@worksync.com",
+  "userEmail": "employee@example.com",
   "locationId": "location-uid",
-  "locationName": "Headquarters",
-  "type": "in", // Options: 'in' | 'out'
+  "locationName": "Google Office - USA",
+  "type": "in",
   "timestamp": "Timestamp",
   "lat": 37.421998,
-  "lng": -122.084000
+  "lng": -122.084
 }
 ```
 
 ### `sessions/{sessionId}`
-Calculated and consolidated working intervals recorded upon successful check-out. Used for displaying individual work history.
+
+Completed work interval, written on punch out (powers User History).
+
 ```json
 {
   "userId": "user-uid",
   "locationId": "location-uid",
-  "locationName": "Headquarters",
+  "locationName": "Google Office - USA",
   "punchInAt": "Timestamp",
   "punchOutAt": "Timestamp",
   "durationSeconds": 28800,
@@ -132,151 +159,155 @@ Calculated and consolidated working intervals recorded upon successful check-out
 }
 ```
 
+> **Note:** `locationName` in `attendance` and `sessions` is denormalized at punch time. Renaming a location in `locations` does not rewrite old records; the app resolves the live name by `locationId` when displaying history.
+
 ---
 
-## 🛡️ Security Rules & Indexes
+## Security rules
 
-Database access is protected by granular security checks defined in `firestore.rules`. 
+Defined in `firestore.rules`:
 
-### Security Highlights
-- **Users**: Read/Write only allowed for their own profile, except Super Admins who can read all user records.
-- **Locations**: Read allowed for all authenticated users. Create/Update/Delete exclusively allowed for `super_admin` accounts.
-- **Attendance / Sessions**: Read/Create restricted to the individual owner. Updates and deletes are completely blocked for everyone (`allow update, delete: if false`).
+| Collection | Read | Write |
+| :--- | :--- | :--- |
+| `users` | Own profile; super admin reads all | User creates own doc as `employee`; super admin can update roles |
+| `locations` | Any signed-in user | Super admin only |
+| `attendance` | Own records; super admin reads all | Create own punches only; no update/delete |
+| `sessions` | Own sessions; super admin reads all | Create own completed session on punch out; no update/delete |
 
-Deploying rules and indexes:
+Deploy:
+
 ```bash
 npx -y firebase-tools@latest deploy --only firestore
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting started
 
-### 📋 Prerequisites
-- **Flutter SDK**: `sdk: '>=3.3.0 <4.0.0'`
-- **Node.js** (required to run Firebase CLI commands)
-- **Android Studio** (Android emulator/device) or **Xcode** (iOS simulator/device)
+### Prerequisites
 
-### 1. Installation
-Clone the repository and fetch the dependencies:
+- Flutter SDK `>=3.3.0 <4.0.0`
+- Node.js (Firebase CLI)
+- Android Studio / Xcode for device or emulator
+
+### 1. Install
+
 ```bash
 git clone <repository-url>
 cd attendance_tracker
 flutter pub get
 ```
 
-### 2. Firebase Project Association & Setup
-Initialize Firebase using standard tools:
-```bash
-# 1. Login to Firebase CLI
-npx -y firebase-tools@latest login
+### 2. Firebase setup
 
-# 2. Activate Flutterfire globally (if not already done)
+```bash
+npx -y firebase-tools@latest login
 dart pub global activate flutterfire_cli
-# Add to PATH if `flutterfire` is not found (or use full path):
 export PATH="$PATH:$HOME/.pub-cache/bin"
 
-# 3. Configure platforms (Android only if iOS CLI registration fails)
 flutterfire configure --project=attendance-tracker-demo-app --yes --platforms=android
-# iOS: add app in Firebase Console, then: --platforms=ios
+# iOS: register app in Firebase Console, then add --platforms=ios
 ```
 
-### 3. Firebase Authentication (Email / Google)
+### 3. Authentication
 
-Email/Password and Google are enabled in Firebase Console → **Authentication** → **Sign-in method**. The app uses `firebase_auth` via `AuthRepository` and the login screen.
+Enable **Email/Password** and **Google** in Firebase Console → Authentication → Sign-in method.
 
-**Email / password (works after Firebase init):**
-1. Tap **Sign Up**, enter email + password (min 6 chars), then **Create Account**.
-2. Or **Sign In** with an existing user.
-3. A `users/{uid}` doc is created in Firestore with `role: employee`.
+**Email / password**
 
-**Google Sign-In (requires SHA-1):**
-1. Android package is `com.satishvishwakarma.attendance_tracker.demo` (avoids SHA-1 conflicts with the same debug key on the old package name).
-2. Add debug SHA-1 on the **attendance_tracker_demo** Android app in Firebase → Project settings → **Add fingerprint**:
+1. Tap **Sign Up**, enter email + password (min 6 chars).
+2. A `users/{uid}` document is created with `role: employee`.
+
+**Google Sign-In (Android)**
+
+1. Package: `com.satishvishwakarma.attendance_tracker.demo`
+2. Add debug SHA-1 in Firebase → Project settings → Android app → Add fingerprint:
    `9B:97:6A:9E:05:10:52:D7:A8:78:9B:2C:AD:37:79:C9:DD:29:C2:5C`
-3. Re-run `flutterfire configure --project=attendance-tracker-demo-app --yes --platforms=android` and ensure `google-services.json` includes an OAuth client with `client_type: 1`.
-4. `AppConfig.googleWebClientId` must match the **Web client ID** from Authentication → Google → Web SDK configuration.
+3. Re-run `flutterfire configure` and confirm `google-services.json` has an OAuth client with `client_type: 1`.
+4. Set `AppConfig.googleWebClientId` in `lib/config/constant/app_config.dart` to your Web client ID from Firebase Authentication → Google.
 
-### 4. Google Sign-In Configurations
+**Generate SHA fingerprints**
 
-To ensure Google Sign-In works seamlessly across targets, configure the SHA credentials:
-
-#### Android SHA Configuration
-1. Generate your SHA signatures from your local machine:
-   ```bash
-   cd android
-   ./gradlew signingReport
-   ```
-2. Copy the **SHA-1** and **SHA-256** keys from the console output.
-3. Open your project on the [Firebase Console](https://console.firebase.google.com).
-4. Navigate to **Project Settings** → **Your Apps** → **Android App**.
-5. Click **Add fingerprint** and add both SHA-1 and SHA-256 certificates.
-6. Re-download `google-services.json` or run `flutterfire configure` again to synchronize the OAuth clients.
-7. Note: The app relies on the Google Web Client ID for cross-platform authentication. You can optionally modify `AppConfig.googleWebClientId` in `lib/config/constant/app_config.dart` with your Web Client ID from the console's Authentication credentials if needed.
+```bash
+cd android && ./gradlew signingReport
+```
 
 ---
 
-## 🛡️ Device & Platform Configuration
+## Device configuration
 
-The app requires standard location permissions to compute geofence metrics.
+### Android
 
-### 📱 Android Requirements
-The required permissions are already added to `android/app/src/main/AndroidManifest.xml`:
+`android/app/src/main/AndroidManifest.xml`:
+
 ```xml
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 ```
 
-### 🍏 iOS Requirements
-1. The permission description is defined in `ios/Runner/Info.plist`:
-   ```xml
-   <key>NSLocationWhenInUseUsageDescription</key>
-   <string>This application requires access to your location to verify your presence within the registered office geofences.</string>
-   ```
-2. In `ios/Podfile`, make sure the location permission macro is enabled:
-   ```ruby
-   ## Setup permission handler variables
-   # target.build_configurations.each do |config|
-   #   config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', 'PERMISSION_LOCATION=1']
-   # end
-   ```
-3. Run dependency installation:
-   ```bash
-   cd ios
-   pod install
-   cd ..
-   ```
+### iOS
+
+`ios/Runner/Info.plist`:
+
+```xml
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>This application requires access to your location to verify your presence within the registered office geofences.</string>
+```
+
+```bash
+cd ios && pod install && cd ..
+```
 
 ---
 
-## 🏃 Running & Testing the App
+## Run & test
 
-1. Deploy the Firestore security rules and configuration index settings:
-   ```bash
-   npx -y firebase-tools@latest deploy --only firestore
-   ```
-2. Run on a connected physical device or simulator:
-   ```bash
-   flutter run
-   ```
-3. **Become a Super Admin**:
-   - Register a new user account via the app's Email Sign Up or Google Sign-In.
-   - Open your project on the [Firebase Console](https://console.firebase.google.com).
-   - In Firestore, locate your user document under the `users` collection (`users/<your-uid>`).
-   - Edit the `role` field from `employee` to `super_admin`.
-   - Re-open the app (or log out and back in). The **Admin Dashboard**, **Location Settings**, and **Organization Monitor** features will now be fully unlocked!
+```bash
+npx -y firebase-tools@latest deploy --only firestore
+flutter run
+```
 
----
+### Seed a super admin
 
-## 🎨 Development & Styling Conventions
+1. Register via the app (email or Google).
+2. Firebase Console → Firestore → `users/<your-uid>`.
+3. Change `role` from `employee` to `super_admin`.
+4. Sign out and back in — admin dashboard, **Locations**, and **Attendance Log** unlock.
 
-- **Modern Theme System**: We leverage a specialized Material 3 color system configured in `lib/core/theme/app_theme.dart`. Developers should retrieve style tokens using the custom `BuildContext` extensions:
-  - `context.colors` to fetch the themed `ColorScheme`.
-  - `context.textStyles` to retrieve `GoogleFonts.lato`-powered text settings.
-- **Centralized Logs**: Do not use `print` or `debugPrint`. Use our customized `Logger` based on the `talker` library (`lib/core/utils/logger.dart`) to capture clean, structured diagnostic output.
-- **State Management Pattern**: Strictly use Riverpod Notifiers for business/screen states. Never inject queries directly into widgets; always route Firestore reads and writes through Repository classes defined under `lib/data/repositories/`.
+### Demo checklist
+
+- [ ] Super admin adds a location in Firestore / Locations screen
+- [ ] Employee punches in only inside geofence radius
+- [ ] Employee punches out and sees session in User History
+- [ ] Super admin sees grouped in/out cards in Attendance Log
+- [ ] Renamed location shows updated name in history (live lookup)
+- [ ] Security rules deny cross-user writes
 
 ---
 
-## 📄 License
-This project is private and intended solely for review and interview evaluations.
+## Tech stack
+
+| Area | Package |
+| :--- | :--- |
+| State | `flutter_riverpod` |
+| Routing | `go_router` |
+| Backend | `firebase_core`, `firebase_auth`, `cloud_firestore` |
+| Location | `geolocator`, `permission_handler` |
+| UI | Material 3, `google_fonts` (Inter), `flutter_screenutil` |
+| Logging | `talker` via `lib/core/utils/logger.dart` |
+
+---
+
+## Development conventions
+
+- **Theme** — colors and styles in `lib/core/theme/app_theme.dart` only; use `context.colors` and `context.textStyles`
+- **Punch colors** — `ColorScheme.punchIn` / `punchOut` extensions for IN/OUT UI
+- **Logging** — use `Logger` from `lib/core/utils/logger.dart`; never `print` / `debugPrint`
+- **Data access** — widgets → providers → repositories; no Firestore calls in `build()`
+- **Shared widgets** — reusable pieces under `lib/core/widgets/`
+
+---
+
+## License
+
+Private project for review and interview evaluation.

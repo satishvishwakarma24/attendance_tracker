@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '/core/theme/app_theme.dart';
+import '/core/widgets/punch_session_times_bar.dart';
 import '/data/models/user_session.dart';
 import '../widgets/module_responsive.dart';
 import '/modules/common/providers/session_provider.dart';
+import '/modules/location/providers/locations_provider.dart';
 
 class UserHistoryScreen extends ConsumerWidget {
   const UserHistoryScreen({super.key});
@@ -13,6 +14,7 @@ class UserHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sessionsAsync = ref.watch(userSessionsProvider);
+    final liveNames = ref.watch(locationNameMapProvider).value ?? {};
     final text = context.textStyles;
 
     return sessionsAsync.when(
@@ -42,7 +44,10 @@ class UserHistoryScreen extends ConsumerWidget {
             itemCount: sessions.length,
             separatorBuilder: (_, __) => SizedBox(height: 12.h),
             itemBuilder: (context, index) {
-              return _SessionTile(session: sessions[index]);
+              return _SessionTile(
+                session: sessions[index],
+                liveNames: liveNames,
+              );
             },
           );
         },
@@ -51,9 +56,13 @@ class UserHistoryScreen extends ConsumerWidget {
 }
 
 class _SessionTile extends StatelessWidget {
-  const _SessionTile({required this.session});
+  const _SessionTile({
+    required this.session,
+    required this.liveNames,
+  });
 
   final UserSession session;
+  final Map<String, String> liveNames;
 
   Duration? _effectiveDuration(UserSession session) {
     if (!session.isActive) return session.duration;
@@ -79,16 +88,13 @@ class _SessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final text = context.textStyles;
-    final dateFormat = DateFormat('MMM d, yyyy · hh:mm a');
-
-    final punchInLabel = session.punchInAt != null
-        ? dateFormat.format(session.punchInAt!)
-        : '—';
-    final punchOutLabel = session.isActive
-        ? 'Still punched in'
-        : session.punchOutAt != null
-            ? dateFormat.format(session.punchOutAt!)
-            : '—';
+    final durationAccent =
+        session.isActive ? colors.punchIn : colors.primary;
+    final locationLabel = resolveLocationDisplayName(
+      locationId: session.locationId,
+      storedName: session.locationName,
+      liveNames: liveNames,
+    );
 
     return Card(
       child: Padding(
@@ -98,19 +104,27 @@ class _SessionTile extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  session.isActive
-                      ? Icons.login
-                      : Icons.logout,
-                  color: session.isActive ? colors.primary : colors.tertiary,
-                  size: 22.sp,
+                Container(
+                  width: 40.w,
+                  height: 40.w,
+                  decoration: BoxDecoration(
+                    color: durationAccent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    session.isActive
+                        ? Icons.login_rounded
+                        : Icons.work_history_outlined,
+                    color: durationAccent,
+                    size: 22.sp,
+                  ),
                 ),
-                SizedBox(width: 8.w),
+                SizedBox(width: 10.w),
                 Expanded(
                   child: Text(
-                    session.locationName ?? 'Office',
+                    locationLabel,
                     style: text.labelLarge?.copyWith(
-                      color: session.isActive ? colors.primary : null,
+                      fontWeight: FontWeight.w700,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -120,54 +134,29 @@ class _SessionTile extends StatelessWidget {
                   padding:
                       EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: colors.secondaryContainer,
+                    color: colors.primaryContainer,
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Text(
                     _formatDuration(_effectiveDuration(session)),
                     style: text.labelSmall?.copyWith(
-                      color: colors.onSecondaryContainer,
-                      letterSpacing: 0.5,
+                      color: colors.onPrimaryContainer,
+                      letterSpacing: 0.3,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 12.h),
-            _RowLabel(label: 'Punch in', value: punchInLabel, text: text),
-            SizedBox(height: 6.h),
-            _RowLabel(label: 'Punch out', value: punchOutLabel, text: text),
+            PunchSessionTimesBar(
+              punchInAt: session.punchInAt,
+              punchOutAt: session.punchOutAt,
+              isActive: session.isActive,
+            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _RowLabel extends StatelessWidget {
-  const _RowLabel({
-    required this.label,
-    required this.value,
-    required this.text,
-  });
-
-  final String label;
-  final String value;
-  final TextTheme text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 72.w,
-          child: Text(label, style: text.bodySmall),
-        ),
-        Expanded(
-          child: Text(value, style: text.bodyMedium),
-        ),
-      ],
     );
   }
 }

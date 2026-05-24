@@ -31,6 +31,16 @@ class LocationRepository {
     });
   }
 
+  /// Live id → name map for resolving stored punch/session labels.
+  Stream<Map<String, String>> watchLocationNameMap() {
+    return _locations.snapshots().map(
+          (snapshot) => {
+            for (final doc in snapshot.docs)
+              doc.id: doc.data()['name'] as String? ?? '',
+          },
+        );
+  }
+
   Future<OfficeLocationModel?> getLocation(String id) async {
     try {
       final doc = await _locations.doc(id).get();

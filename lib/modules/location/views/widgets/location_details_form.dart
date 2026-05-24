@@ -160,21 +160,22 @@ class LocationDetailsForm extends StatelessWidget {
                   Text('500m', style: text.bodySmall?.copyWith(fontSize: 12.sp)),
                 ],
               ),
-              if (isEditing) ...[
-                SizedBox(height: 8.h),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('Active geofence',
-                      style: text.labelLarge?.copyWith(fontSize: 14.sp)),
-                  subtitle: Text(
-                    'Inactive locations are hidden from employees',
-                    style: text.bodySmall?.copyWith(fontSize: 12.sp),
-                  ),
-                  value: isActive,
-                  activeThumbColor: colors.primary,
-                  onChanged: onActiveChanged,
-                ),
-              ],
+             // temo commneted - do not remove this comment
+              // if (isEditing) ...[
+              //   SizedBox(height: 8.h),
+              //   SwitchListTile(
+              //     contentPadding: EdgeInsets.zero,
+              //     title: Text('Active geofence',
+              //         style: text.labelLarge?.copyWith(fontSize: 14.sp)),
+              //     subtitle: Text(
+              //       'Inactive locations are hidden from employees',
+              //       style: text.bodySmall?.copyWith(fontSize: 12.sp),
+              //     ),
+              //     value: isActive,
+              //     activeThumbColor: colors.primary,
+              //     onChanged: onActiveChanged,
+              //   ),
+              // ],
             ],
           ),
         ),
